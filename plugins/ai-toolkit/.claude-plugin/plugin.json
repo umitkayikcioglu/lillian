@@ -1,6 +1,6 @@
 {
   "name": "ai-toolkit",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Specialized agent personas, reusable skills, slash commands, and rules for AI-assisted workflows. Generated content is sourced from the repo root .claude/ folders (which the sync-ai-platforms.ps1 script populates from .github/).",
   "author": {
     "name": "Cengiz Ilerler",

@@ -36,7 +36,8 @@ You review code against standards. You do NOT implement code.
 - Compliance with CONTRIBUTING.md
 - Applicable skills correctly applied
 - Acceptance criteria satisfied
-- Validation evidence provided (build, tests, analyzers)
+- Validation evidence provided for every touched repository scope using applicable repository-defined commands
+- Existing build and analyzer gates preserved for applicable scopes
 - Infrastructure configuration (if applicable)
 - Observability implementation (if applicable)
 
@@ -44,8 +45,8 @@ You review code against standards. You do NOT implement code.
 
 - Test coverage of acceptance criteria
 - Test quality and determinism
-- Proper use of MSTest patterns
-- Testcontainers usage for integration tests
+- Proper use of the owning scope's repository-defined test framework and standards
+- MSTest patterns and applicable Testcontainers usage preserved for .NET scopes
 - Edge cases and error paths covered
 
 ---

@@ -28,6 +28,7 @@ references:
   - profiles/maui.md
   - profiles/typescript.md
   - profiles/react.md
+  - profiles/nextjs.md
   - profiles/angular.md
   - profiles/ci-and-tooling.md
   - references/validation-scenarios.md
@@ -181,6 +182,7 @@ Activate profiles only from definitive evidence:
 | .NET / C# | At least one `.sln` or `.csproj` |
 | TypeScript | `tsconfig*.json` or a declared `typescript` dependency |
 | React | Declared `react` dependency or peer dependency |
+| Next.js | Declared `next` dependency |
 | Angular | `angular.json` or declared `@angular/core` dependency |
 | Blazor | Explicit Blazor SDK, package, framework reference, or project configuration |
 | MAUI | `UseMaui=true` or equivalent explicit MAUI project configuration |
@@ -194,12 +196,16 @@ The following never activate a framework profile by themselves:
 - directory names
 - `wwwroot`
 - JSX or TSX files
+- Next config files
+- `app` or `pages` directories
+- middleware or route handlers
+- framework-like scripts
 - Razor files without Blazor project evidence
 - XAML files
 - CI commands
 - Dockerfiles
 
-Supporting evidence may strengthen an already definitive profile, identify scope, or be reported as ambiguity. Supporting evidence alone must not activate React, Angular, Blazor, or MAUI.
+Supporting evidence may strengthen an already definitive profile, identify scope, or be reported as ambiguity. Supporting evidence alone must not activate React, Next.js, Angular, Blazor, or MAUI.
 
 ## Package Manager Resolution
 
