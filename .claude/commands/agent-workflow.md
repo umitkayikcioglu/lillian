@@ -19,9 +19,10 @@ This file defines the **agent workflow** for this repository — the flow, routi
 | `.github/CONTRIBUTING.md` | Engineering standards (authoritative) |
 | `.github/skills/INDEX.md` | Skill routing and library references |
 | `.claude/agents/workflow-*.md` | Role definitions and behaviors |
-| `.claude/rules/*.md` | Technology-specific conventions (Blazor, C#, SQL, Infrastructure, Testing) |
+| `.claude/rules/*.md` | Technology- and path-specific conventions |
 
 When working on a specific technology, also load the corresponding instruction file from `.claude/rules/`.
+Validation commands are selected from detected repository configuration per touched scope; do not assume one global build, test, lint, or package-manager command.
 
 ---
 

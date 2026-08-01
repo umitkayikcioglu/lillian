@@ -230,6 +230,27 @@ If multiple skills match a task, apply all applicable skills.
 
 ---
 
+## web-frontend-development
+- Path: `.github/skills/web-frontend-development/SKILL.md`
+- Applies to: Planner, Architect, Developer, Reviewer, Tester, Documenter
+- Mandatory when:
+  - Implementing or reviewing TypeScript frontend code
+  - Implementing or reviewing React, Next.js, or Angular applications
+  - Resolving frontend lint, type-check, test, build, package-manager, or workspace validation
+- Triggers:
+  - "web frontend"
+  - "frontend development"
+  - "TypeScript"
+  - "React"
+  - "Next.js"
+  - "Nextjs"
+  - "Angular"
+  - "frontend lint"
+  - "frontend test"
+  - "frontend build"
+
+---
+
 ## work-item-generator
 - Path: `.github/skills/work-item-generator/SKILL.md`
 - Applies to: Planner, Developer, Architect

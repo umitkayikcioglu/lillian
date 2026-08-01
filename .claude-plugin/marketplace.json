@@ -6,14 +6,14 @@
   },
   "metadata": {
     "description": "AI agent templates: specialized agent personas, reusable skills, slash commands, and rules. Source of truth for Claude Code, Copilot, Antigravity, and Codex.",
-    "version": "1.0.3"
+    "version": "1.0.4"
   },
   "plugins": [
     {
       "name": "ai-toolkit",
       "source": "./plugins/ai-toolkit",
       "description": "Specialized agent personas, reusable skills, slash commands, and rules for AI-assisted workflows.",
-      "version": "1.0.3",
+      "version": "1.0.4",
       "category": "engineering",
       "tags": [
         "agents",

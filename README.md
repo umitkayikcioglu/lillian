@@ -11,7 +11,7 @@ This repository provides a structured framework for AI-assisted software develop
 - **🤖 Specialized Agent Roles**: 8 workflow agents (Planner, Architect, Designer, DBA, Developer, Reviewer, Tester, Documenter) plus 5 council personas used by the pressure-test skill
 - **📋 Structured Workflow**: Clear transitions and responsibilities between agents
 - **🎯 Domain-Specific Skills**: Reusable skills for common engineering tasks
-- **📚 Technology-Specific Instructions**: Guidelines for Blazor, C#, SQL, Infrastructure, and Testing
+- **📚 Technology-Specific Instructions**: Guidelines for Blazor, C#, SQL, Infrastructure, Testing, TypeScript, React, Next.js, Angular, and frontend quality
 - **🔄 Multi-AI Support**: Compatible with GitHub Copilot, Claude Code, OpenAI Codex, and Google Antigravity
 
 ### AI Assistant Compatibility Matrix
@@ -519,6 +519,7 @@ The repository includes production-ready skills for engineering, documentation, 
 - **session-handoff**: Structured end-of-session summary so a fresh agent can continue seamlessly after the context is cleared. Chat-only output.
 - **solution-structure**: Source of truth for the opinionated .NET solution folder structure (root scaffolding, /docs, /src/Modules/Component/Service hierarchy, /tools/Kubernetes, /tests) and the documentation placement rules that govern items inside it.
 - **storm-research**: Multi-perspective, citation-verified HTML research briefing — five expert lenses, contradiction map, synthesized report, adversarial peer review with primary-source verification.
+- **web-frontend-development**: TypeScript, React, Next.js, and Angular frontend development with manifest-first stack detection and scope-aware validation.
 - **work-item-generator**: Interactive generator for work items (initiatives, epics, features, stories, bugs, spikes, enhancements, tasks) that gathers context through targeted questions and produces structured documents.
 - **workspace-productivity**: Initializes folders and documents, syncs tasks, triages stale items, and maintains a two-tier memory system for decoding workplace shorthand.
 <!-- END GENERATED SKILLS LIST -->
