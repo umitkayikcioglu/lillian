@@ -340,6 +340,12 @@ One thing may still need adjusting: the `tasks/todo.md` and `tasks/lessons.md` p
 
 > **Why no automation.** A refresh hook would have to live inside `.ai/.git/hooks/`, with vendor-specific scripts behind it sitting in your repository — the one category of file this setup keeps out. It would also overwrite a file your repository owns during an ordinary `git pull`, discarding local edits with no prompt. The payoff would be a notification you already have: you control this content, so when it changes it is because you changed it.
 
+### Bootstrap Project Instructions
+
+Use `project-instructions-bootstrap` when a consuming repository needs durable, project-owned `.github/CONTRIBUTING.md` and `.github/copilot-instructions.md` files created or refreshed from detected stack and command evidence. Invoke it through the `project-instructions-bootstrap` prompt where prompts are supported, or call the `project-instructions-bootstrap` skill directly where skills can be invoked.
+
+The capability is safe to run repeatedly: it updates only Lillian-managed sections in those two target files, preserves manual content, refuses target-file and `.github` symlink/reparse-point writes, and reports ambiguous evidence instead of inventing commands or frameworks. The source of truth for the capability lives under `.github/`; run `tools/sync-ai-platforms.ps1` in this repository to project the prompt and skill into the generated Claude, Codex, Antigravity, and plugin outputs.
+
 ### Auto-Sync on Commit (Git Hook)
 
 > [!CAUTION]
@@ -509,6 +515,7 @@ The repository includes production-ready skills for engineering, documentation, 
 - **observability**: Standard SLIs, dashboard templates, alert conventions, and OpenTelemetry patterns for .NET services.
 - **plantuml-sequence-diagram-generator**: Generate professional PlantUML sequence diagrams with consistent styling, colors, and standardized interaction patterns.
 - **pressure-test**: Adversarial 5-persona council that attacks an idea from every angle, then a Judge returns one GO / RESHAPE / KILL verdict with the cheapest 48-hour test to de-risk it. Optional anonymized peer-review round.
+- **project-instructions-bootstrap**: Safely bootstraps repo-owned CONTRIBUTING.md and copilot-instructions.md files from bounded stack and command evidence.
 - **session-handoff**: Structured end-of-session summary so a fresh agent can continue seamlessly after the context is cleared. Chat-only output.
 - **solution-structure**: Source of truth for the opinionated .NET solution folder structure (root scaffolding, /docs, /src/Modules/Component/Service hierarchy, /tools/Kubernetes, /tests) and the documentation placement rules that govern items inside it.
 - **storm-research**: Multi-perspective, citation-verified HTML research briefing — five expert lenses, contradiction map, synthesized report, adversarial peer review with primary-source verification.

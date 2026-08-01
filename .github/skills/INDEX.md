@@ -168,6 +168,22 @@ If multiple skills match a task, apply all applicable skills.
 
 ---
 
+## project-instructions-bootstrap
+- Path: `.github/skills/project-instructions-bootstrap/SKILL.md`
+- Applies to: Planner, Architect, Developer, Reviewer, Tester, Documenter
+- Mandatory when:
+  - Bootstrapping project-owned contributing guidelines from Lillian
+  - Updating project-owned Copilot or Codex orchestration from detected repository evidence
+  - Creating `.github/CONTRIBUTING.md` and `.github/copilot-instructions.md` for a consuming repository
+- Triggers:
+  - "project-instructions-bootstrap"
+  - "bootstrap project instructions"
+  - "create contributing instructions"
+  - "update copilot instructions"
+  - "generate repository instructions"
+
+---
+
 ## session-handoff
 - Path: `.github/skills/session-handoff/SKILL.md`
 - Applies to: All agents
