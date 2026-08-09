@@ -3,7 +3,7 @@
 [CmdletBinding(SupportsShouldProcess, ConfirmImpact = "Medium")]
 param(
     [ValidateNotNullOrEmpty()]
-    [string]$Lillian = $PSScriptRoot,
+    [string]$Lillian = (Split-Path -Parent $PSScriptRoot),
 
     [ValidateNotNullOrEmpty()]
     [string]$RepositoryUrl = "https://github.com/umitkayikcioglu/lillian.git",
