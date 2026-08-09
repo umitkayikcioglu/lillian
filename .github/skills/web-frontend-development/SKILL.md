@@ -27,7 +27,9 @@ triggers:
   - frontend build
 references:
   - references/frontend-quality.md
+  - references/frontend-security.md
   - references/package-management.md
+  - references/workspace-routing.md
   - references/typescript.md
   - references/react.md
   - references/nextjs.md
@@ -48,8 +50,10 @@ Use this skill for TypeScript-based frontend work in React, Next.js, and Angular
 - `references/nextjs.md` owns Next.js router, server/client boundaries, data fetching, caching, metadata, route handlers, runtime, deployment, and Next.js-specific tests.
 - `references/angular.md` owns Angular DI, standalone/modules, signals/RxJS, templates, routing, forms, change detection, and Angular-specific tests.
 - `references/testing.md` owns cross-framework frontend test quality.
-- `references/frontend-quality.md` owns validation lifecycle, lint, formatting, type-check, test/build command execution, suppression handling, reporting, and mutation controls.
-- `references/package-management.md` owns package managers, workspaces, lockfiles, and command execution.
+- `references/workspace-routing.md` owns repository, workspace, package, and project ownership resolution.
+- `references/package-management.md` owns package managers, lockfiles, and dependency-install mutation policy.
+- `references/frontend-quality.md` owns validation categories, severity, suppression handling, reporting, and formatter mutation controls.
+- `references/frontend-security.md` owns frontend security, privacy, accessibility, and performance applicability checks.
 - `.github/CONTRIBUTING.md` owns cross-stack engineering policy and severity.
 
 Instruction files and prompts are thin loaders. Bootstrap profiles contain concise durable consumer-repository guidance only.
@@ -60,22 +64,25 @@ Maintain a de-duplicated set of loaded references for the task.
 
 1. For any activated frontend task, always load exactly once:
    - `references/frontend-quality.md`
+   - `references/frontend-security.md` when the change is user-facing or crosses an auth, data, environment, or dependency boundary
    - `references/package-management.md`
+   - `references/workspace-routing.md`
 2. Load technology references only after definitive evidence in the relevant package or workspace scope:
    - TypeScript: `references/typescript.md`
    - React: `references/react.md`
    - Next.js: `references/nextjs.md`
    - Angular: `references/angular.md`
 3. Load `references/testing.md` only when the task touches tests, creates tests, fixes tests, reviews tests, or requires test validation.
-4. If multiple instruction files match a path, still load each canonical reference at most once.
-5. Treat path globs as routing hints only. A filename, extension, or directory name must never activate a framework without definitive repository evidence.
+4. Load `references/validation-scenarios.md` when validating this skill or changing routing, activation, command, or reference-loading rules.
+5. If multiple instruction files match a path, still load each canonical reference at most once.
+6. Treat path globs as routing hints only. A filename, extension, or directory name must never activate a framework without definitive repository evidence.
 
 ## Manifest-First Discovery
 
 Start from manifests and configuration before source files:
 
 1. Inspect root manifests and workspace declarations.
-2. Resolve declared workspaces.
+2. Resolve declared workspaces and the owning package/project for every touched path; follow [workspace-routing.md](references/workspace-routing.md).
 3. Inspect only manifests belonging to relevant workspaces or owning packages.
 4. Search for relevant manifests only when no workspace declaration exists.
 5. Inspect source files only to answer a specific unresolved router, Angular architecture, or ownership question after definitive framework evidence exists.
@@ -88,10 +95,10 @@ Activate frameworks only from definitive evidence:
 
 | Framework | Definitive evidence |
 |-----------|---------------------|
-| TypeScript | `tsconfig*.json` or a declared `typescript` dependency |
-| React | Declared `react` dependency or peer dependency |
-| Next.js | Declared `next` dependency |
-| Angular | `angular.json` or declared `@angular/core` dependency |
+| TypeScript | `tsconfig*.json` or an effective `typescript` dependency in the owning package/workspace scope |
+| React | An effective `react` dependency or peer dependency in the owning package/workspace scope |
+| Next.js | An effective `next` dependency in the owning package/workspace scope |
+| Angular | `angular.json` or an effective `@angular/core` dependency in the owning package/workspace scope |
 
 Supporting-only signals include source extensions, directory names, `next.config.*`, `app/`, `pages/`, middleware, route handlers, CI commands, framework-like scripts, JSX/TSX alone, and Angular-style filenames alone.
 
@@ -106,7 +113,7 @@ After activation, inspect minimal evidence to classify:
 
 ## Scope and Command Model
 
-Resolve stack, package manager, and commands per scope. Supported scopes include root, node workspace, node package, Nx project, Turborepo task, Angular project, .NET solution, and .NET project.
+Resolve stack, package manager, ownership, and commands per scope. Supported scopes include root, node workspace, node package, Nx project, Turborepo package/task, Angular project, .NET solution, and .NET project. Apply the generic ownership procedure before tool-specific routing.
 
 Every verified command must preserve:
 
@@ -116,6 +123,8 @@ Every verified command must preserve:
 - exact command or script
 - command category
 - evidence source
+
+Use the structured result contract from [frontend-quality.md](references/frontend-quality.md). Missing, ambiguous, or unavailable commands are reported with their actual status; they are never reported as passed.
 
 Never translate commands between npm, pnpm, Yarn, and Bun. Never invent lint, format, type-check, test, or build commands. Do not treat "not configured" as "passed."
 
@@ -141,7 +150,7 @@ Definitive Turborepo evidence includes `turbo.json` or another repository-suppor
 
 ### Angular Project Routing
 
-After Angular activation, read `angular.json` and resolve touched files independently:
+After Angular activation, resolve touched files independently. If `angular.json` exists:
 
 1. Record each declared project's name, type, root, source root, targets or architect entries, configurations, and explicitly declared default project.
 2. Select the most specific matching project root or source root. A default project does not override path ownership.
@@ -149,15 +158,18 @@ After Angular activation, read `angular.json` and resolve touched files independ
 4. Preserve separate results for each touched project; include siblings only when a declared dependency or repository gate requires them.
 5. Report overlapping roots, unresolved ownership, or conflicting targets as ambiguity.
 
+If `angular.json` does not exist, use the owning package/project manifest, Nx or other declared project configuration, and repository scripts. If no unique owner or target can be established, report ambiguity and do not guess a command.
+
 ## Test Context Routing
 
 Test file and directory path matches identify test context only. Determine ownership from repository evidence:
 
 - For .NET, use the nearest owning `.csproj`; treat `.sln` as grouping/supporting evidence.
 - For frontend, use the nearest relevant `package.json`, workspace project, Angular project, or Nx project.
+- For generic workspaces, resolve ownership and membership using [workspace-routing.md](references/workspace-routing.md); do not treat a root script as a package-local command without evidence.
 - In mixed monorepos, resolve test policy independently per package or project.
 - If ownership is ambiguous, report ambiguity and do not guess a framework.
 
 For .NET scopes, `.github/CONTRIBUTING.md` preserves MSTest as the Lillian standard. Existing xUnit or NUnit usage is a standards mismatch and must not be migrated without explicit approval.
 
-For activated frontend scopes, load `references/testing.md`, `references/frontend-quality.md`, `references/package-management.md`, and any definitively activated framework references. Use existing declared test frameworks and verified scripts.
+For activated frontend scopes, load `references/workspace-routing.md`, `references/frontend-quality.md`, `references/package-management.md`, and any applicable security, testing, or framework references. Use existing declared test frameworks and verified scripts.

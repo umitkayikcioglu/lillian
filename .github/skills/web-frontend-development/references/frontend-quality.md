@@ -1,6 +1,16 @@
 # Frontend Quality Reference
 
-This reference owns frontend validation lifecycle, command execution, suppression policy, reporting, and mutation controls.
+This reference owns frontend validation categories, severity, suppression policy, reporting, and formatter mutation controls. Workspace routing and command evidence are resolved by [workspace-routing.md](workspace-routing.md) and [package-management.md](package-management.md).
+
+## Contents
+
+- [Authoritative Configuration](#authoritative-configuration)
+- [Validation Categories](#validation-categories)
+- [Validation Gate Model](#validation-gate-model)
+- [Lint Severity](#lint-severity)
+- [Suppression Policy](#suppression-policy)
+- [Formatting Safety](#formatting-safety)
+- [Validation Reporting](#validation-reporting)
 
 ## Authoritative Configuration
 
@@ -23,8 +33,26 @@ Resolve and report separately:
 - integration tests
 - end-to-end tests
 - build
+- security
+- accessibility
+- performance
 
 Do not treat "not configured" as "passed." Never invent missing commands.
+
+## Validation Gate Model
+
+Report each category independently:
+
+| Category | Missing command | Failed command | Completion effect |
+|---|---|---|---|
+| Lint | Not configured | Apply repository severity | Cannot claim validation passed |
+| Format check | Not configured | Apply repository severity | Cannot claim validation passed when it is a repository gate |
+| Type-check | Not configured | Blocker | Cannot complete implementation |
+| Tests | Not configured per test level | Apply repository severity | Required levels must pass |
+| Build | Not configured | Apply repository severity | Cannot complete when build is a repository gate |
+| Security/accessibility/performance | Not configured | Apply repository severity | Applicability and absence must be explicit |
+
+Use these result values: `passed`, `failed`, `skipped`, `ambiguous`, and `not configured`. A missing capability is never a PASS.
 
 ## Lint Severity
 
@@ -60,4 +88,34 @@ Classify suppression findings using the canonical frontend severity policy in `.
 
 ## Validation Reporting
 
-For every command, report scope, working directory, package manager, exact command, evidence source, category, and result. Report environment or external-service prerequisites when they prevent execution.
+For every attempted, unavailable, or ambiguous category, report scope, working directory, owning package/project, package manager, exact command or `not configured`, evidence source, category, result, and blocker status. Report environment or external-service prerequisites when they prevent execution.
+
+Canonical result shape:
+
+| Field | Required content |
+|---|---|
+| Scope | Repository, workspace, package, project, or solution scope |
+| Working directory | Exact command working directory |
+| Owner | Package/project name and root |
+| Package manager | npm, pnpm, Yarn, Bun, or not applicable |
+| Framework evidence | Evidence path for activated framework(s) |
+| Category | Validation category from this reference |
+| Command | Exact command or `not configured` |
+| Evidence | Manifest, script, target, CI path, or configuration path |
+| Result | `passed`, `failed`, `skipped`, `ambiguous`, or `not configured` |
+| Blocker | `yes`/`no` and reason |
+
+Example:
+
+```text
+Scope: node package
+Working directory: apps/web
+Owner: @company/web (apps/web)
+Package manager: pnpm
+Framework evidence: apps/web/package.json -> next
+Category: type-check
+Command: pnpm --filter @company/web typecheck
+Evidence: apps/web/package.json -> scripts.typecheck
+Result: passed
+Blocker: no
+```

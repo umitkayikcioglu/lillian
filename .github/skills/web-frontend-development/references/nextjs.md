@@ -14,6 +14,7 @@ This reference owns Next.js router, server/client, data, caching, metadata, rout
 - Respect server component and client component boundaries.
 - Do not move code across server/client boundaries without checking imports, runtime APIs, and environment variable exposure.
 - Keep browser-only APIs out of server-only code and server secrets out of client bundles.
+- Apply [frontend-security.md](frontend-security.md) for client/server boundaries, request security, dependency approval, accessibility, and performance applicability.
 
 ## Data, Caching, and Runtime
 
