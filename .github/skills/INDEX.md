@@ -222,6 +222,7 @@ If multiple skills match a task, apply all applicable skills.
   - "bootstrap project instructions"
   - "create contributing instructions"
   - "update copilot instructions"
+  - "update contributing"
   - "generate repository instructions"
 
 ---

@@ -19,6 +19,7 @@ triggers:
   - bootstrap project instructions
   - create contributing instructions
   - update copilot instructions
+  - update contributing
   - generate repository instructions
 references:
   - templates/CONTRIBUTING.template.md

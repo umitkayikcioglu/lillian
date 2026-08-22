@@ -1,6 +1,15 @@
 # Frontend Quality Reference
 
-This reference owns frontend validation lifecycle, command execution, suppression policy, reporting, and mutation controls.
+This reference owns frontend validation severity, suppression policy, and formatter mutation controls. Cross-stack validation categories and result reporting are defined by [validation-output.md](validation-output.md). Workspace routing and command evidence are resolved by [workspace-routing.md](workspace-routing.md) and [package-management.md](package-management.md).
+
+## Contents
+
+- [Authoritative Configuration](#authoritative-configuration)
+- [Validation Gate Model](#validation-gate-model)
+- [Lint Severity](#lint-severity)
+- [Suppression Policy](#suppression-policy)
+- [Formatting Safety](#formatting-safety)
+- [Validation Reporting](#validation-reporting)
 
 ## Authoritative Configuration
 
@@ -11,20 +20,20 @@ Repository configuration is authoritative for linting and formatting. Evidence m
 - If repository configuration intentionally includes generated or vendored files, report that evidence before validating them.
 - If scripts, CI, and tool configuration conflict about tools or exclusions, report ambiguity rather than choosing silently.
 
-## Validation Categories
+## Validation Gate Model
 
-Resolve and report separately:
+Report each category independently:
 
-- lint
-- format check
-- type-check
-- unit tests
-- component tests
-- integration tests
-- end-to-end tests
-- build
+| Category | Missing command | Failed command | Completion effect |
+|---|---|---|---|
+| Lint | Not configured | Apply repository severity | Cannot claim validation passed |
+| Format check | Not configured | Apply repository severity | Cannot claim validation passed when it is a repository gate |
+| Type-check | Not configured | Blocker | Cannot complete implementation |
+| Tests | Not configured per test level | Apply repository severity | Required levels must pass |
+| Build | Not configured | Apply repository severity | Cannot complete when build is a repository gate |
+| Security/accessibility/performance | Not configured | Apply repository severity | Applicability and absence must be explicit |
 
-Do not treat "not configured" as "passed." Never invent missing commands.
+Use the result values and required output fields from [validation-output.md](validation-output.md). A missing capability is never a PASS.
 
 ## Lint Severity
 
@@ -60,4 +69,4 @@ Classify suppression findings using the canonical frontend severity policy in `.
 
 ## Validation Reporting
 
-For every command, report scope, working directory, package manager, exact command, evidence source, category, and result. Report environment or external-service prerequisites when they prevent execution.
+Report every attempted, unavailable, or ambiguous category using [validation-output.md](validation-output.md), including environment or external-service prerequisites when they prevent execution.

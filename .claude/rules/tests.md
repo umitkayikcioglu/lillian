@@ -11,33 +11,48 @@ paths:
   - "**/*.test.jsx"
   - "**/*.spec.js"
   - "**/*.spec.jsx"
+  - "**/test_*.py"
+  - "**/*_test.py"
+  - "**/tests/**/*.py"
   - "**/*.Tests.cs"
   - "**/*Tests.cs"
 ---
 
 # Test Instructions
 
-This file is the canonical authority for test implementation conventions.
+This file identifies test context only. It does not select a test framework by path.
+
+Resolve the owning scope from repository evidence before applying test standards. Do not infer a test framework from path names.
+
+1. **.NET scope:** use the nearest owning `.csproj`; treat `.sln` as solution grouping or supporting evidence, not direct per-file ownership.
+2. **Activated frontend scope:** use the nearest relevant `package.json`, workspace project, Angular project, or Nx project.
+3. **Ambiguous ownership:** when ownership cannot be resolved, report the scope as unresolved and do not guess a framework.
+
+In mixed monorepos, resolve test policy independently per project or package scope.
 
 Test-project placement/naming and HTTP-file placement/naming come from
 [`Canonical test project and HTTP file naming`](../skills/solution-structure/SKILL.md#canonical-test-project-and-http-file-naming).
 
-## Framework and isolation
+## .NET scope
+
+For .NET scopes, follow `.github/CONTRIBUTING.md` (`.NET Testing`) and the conventions below.
+
+### Framework and isolation
 
 - Use **MSTest** only; do not introduce xUnit or NUnit.
 - Keep tests deterministic and isolated. Do not depend on execution order or shared mutable state.
 - Test application behavior, not framework behavior.
 
-## Test method naming
+### Test method naming
 
 Use `{Method}_{Scenario}_{Expected}` for test method names.
 
-## Unit tests
+### Unit tests
 
 - Use fakes or mocks for dependencies.
 - Focus on domain logic, edge cases, and failure paths.
 
-## Integration tests
+### Integration tests
 
 - Use **Testcontainers** when behavior depends on an external database, queue, cache, broker, or other provider.
 - An EF Core test may use an isolated in-memory database only when provider-specific behavior is explicitly out
@@ -48,7 +63,7 @@ Use `{Method}_{Scenario}_{Expected}` for test method names.
   implementation also requires options, cache, telemetry, or another prerequisite. Resolve every service under
   test during fixture startup so missing composition fails before test execution.
 
-## Application test boundary ownership
+### Application test boundary ownership
 
 - Use `WebApplicationFactory<TEntryPoint>` to exercise one ASP.NET Core deployable in-process, with every
   test-only substitution at an external process or resource boundary made explicit.
@@ -68,14 +83,22 @@ Use `{Method}_{Scenario}_{Expected}` for test method names.
   each applicable scenario once at the nearest public boundary.
 - Do not move module or service behavior into a Host test merely to prove that the runner started.
 
-## Options validation tests
+### Options validation tests
 
 - Test property-level data annotations independently from cross-property or `IValidatableObject` invariants.
 - Keep every property-level value valid in the cross-property case so object-level validation is guaranteed to
   run.
 
-## Additional test types
+### Additional test types
 
 - Add API contract tests when an API contract is in scope.
 - Add property-based tests for parsers when they materially improve input-space coverage.
 - Add a basic load smoke test for a critical path when performance or stability risk warrants it.
+
+## Other scopes
+
+For activated frontend scopes, use `.github/skills/web-frontend-development/SKILL.md`.
+
+For activated Node.js scopes, use `.github/skills/node-development/SKILL.md`.
+
+For activated Python scopes, use `.github/skills/python-development/SKILL.md`.

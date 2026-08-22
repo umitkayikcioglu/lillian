@@ -66,7 +66,6 @@ The Tester runs in two phases.
 3. Include edge cases, error paths, and non-functional scenarios
 4. Flag ambiguous or missing acceptance criteria back to Planner
 5. Hand Test Cases to Developer as the build contract
-6. Resolve the owning repository scope and expected framework or runner from repository evidence
 
 ### Phase 2 responsibilities
 6. Write unit and integration tests following `.claude/rules/tests.md`
@@ -88,9 +87,9 @@ Created/updated: `[resolved repository-relative Test Cases document path, includ
 
 ### Automated Tests
 
-| Test Class | Test Count | Type |
-|------------|------------|------|
-| [actual repository-relative test file] | X tests | Unit/Integration |
+| Modified Test Artifact | Owning Scope | Test Level | Framework / Runner | Test Count |
+|------------------------|--------------|------------|--------------------|------------|
+| [path] | [scope] | [test level] | [repository-evidenced runner] | X |
 
 ### Acceptance Criteria Coverage
 

@@ -142,6 +142,29 @@ If multiple skills match a task, apply all applicable skills.
 
 ---
 
+## node-development
+- Path: `node-development/SKILL.md`
+- Applies to: Planner, Architect, Developer, Reviewer, Tester, Documenter
+- Mandatory when:
+  - Implementing or reviewing Node.js backend, CLI, service, or library code
+  - Resolving JavaScript or TypeScript runtime, package, workspace, or build validation
+  - Working with npm, pnpm, Yarn, Bun, Nx, or Turborepo Node scopes
+- Triggers:
+  - "Node.js"
+  - "Nodejs"
+  - "Node backend"
+  - "Node service"
+  - "Node CLI"
+  - "npm"
+  - "pnpm"
+  - "Yarn"
+  - "Bun"
+  - "Express"
+  - "Fastify"
+  - "NestJS"
+
+---
+
 ## observability
 - Path: `observability/SKILL.md`
 - Applies to: Architect, Developer
@@ -188,7 +211,7 @@ If multiple skills match a task, apply all applicable skills.
 ---
 
 ## project-instructions-bootstrap
-- Path: `.github/skills/project-instructions-bootstrap/SKILL.md`
+- Path: `project-instructions-bootstrap/SKILL.md`
 - Applies to: Planner, Architect, Developer, Reviewer, Tester, Documenter
 - Mandatory when:
   - Bootstrapping project-owned contributing guidelines from Lillian
@@ -199,7 +222,29 @@ If multiple skills match a task, apply all applicable skills.
   - "bootstrap project instructions"
   - "create contributing instructions"
   - "update copilot instructions"
+  - "update contributing"
   - "generate repository instructions"
+
+---
+
+## python-development
+- Path: `python-development/SKILL.md`
+- Applies to: Planner, Architect, Developer, Reviewer, Tester, Documenter
+- Mandatory when:
+  - Implementing or reviewing Python application, API, CLI, worker, or library code
+  - Resolving Python environment, package, test, type-check, build, or deployment validation
+  - Working with pyproject.toml, requirements files, Poetry, uv, pip-tools, or Pipenv projects
+- Triggers:
+  - "Python"
+  - "Python API"
+  - "Python CLI"
+  - "Python package"
+  - "FastAPI"
+  - "Django"
+  - "Flask"
+  - "pytest"
+  - "Poetry"
+  - "uv"
 
 ---
 
@@ -250,7 +295,7 @@ If multiple skills match a task, apply all applicable skills.
 ---
 
 ## web-frontend-development
-- Path: `.github/skills/web-frontend-development/SKILL.md`
+- Path: `web-frontend-development/SKILL.md`
 - Applies to: Planner, Architect, Developer, Reviewer, Tester, Documenter
 - Mandatory when:
   - Implementing or reviewing TypeScript frontend code

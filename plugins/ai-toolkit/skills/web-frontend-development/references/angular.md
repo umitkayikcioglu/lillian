@@ -4,14 +4,14 @@ This reference owns Angular architecture, dependency injection, templates, routi
 
 ## Architecture Detection
 
-- Apply only when `angular.json` exists or the relevant scope declares `@angular/core`.
+- Apply only when `angular.json` exists or the owning package/workspace scope has effective `@angular/core` dependency evidence.
 - Detect standalone architecture from `standalone: true`, `bootstrapApplication`, or standalone route imports.
 - Detect module-based architecture from `NgModule`, module declarations, or module imports.
 - Treat both patterns as mixed architecture; preserve existing boundaries.
 
 ## Multi-Project Ownership
 
-For an activated Angular workspace:
+When `angular.json` exists, resolve an activated Angular workspace as follows:
 
 1. Read `angular.json` and record every declared project's name, project type, root, source root, targets or architect entries, configurations, and explicitly declared default project.
 2. Assign a touched file to the project with the most specific matching root or source root.
@@ -21,12 +21,22 @@ For an activated Angular workspace:
 6. Preserve separate validation results for each touched project. Include another project only when a declared dependency or repository gate requires it.
 7. Report overlapping roots, unresolved ownership, or conflicting target evidence as ambiguity.
 
+When `angular.json` does not exist:
+
+1. Resolve the owning package/project from [workspace-routing.md](workspace-routing.md).
+2. Inspect the owning package/project manifest, declared Nx or other project configuration, and repository scripts.
+3. Resolve only targets supported by that evidence; do not invent Angular CLI commands.
+4. Report the scope as ambiguous when no unique owner or target can be established.
+
+Angular library and custom-build projects may therefore activate the reference without an `angular.json` file.
+
 ## Angular Patterns
 
 - Use repository evidence and version information before applying version-specific guidance.
 - Preserve dependency injection boundaries.
 - Keep signals, RxJS, and state ownership aligned with existing project conventions.
 - Preserve template type safety, forms strategy, routing patterns, and change-detection approach.
+- Apply [frontend-security.md](frontend-security.md) for client/server boundaries, user-controlled content, accessibility, and performance applicability.
 
 ## Angular-Specific Tests
 

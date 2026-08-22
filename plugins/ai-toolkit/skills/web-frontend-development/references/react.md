@@ -20,6 +20,7 @@ This reference owns React component, hook, state, effect, rendering, accessibili
 - Provide loading, empty, and error states for user-facing asynchronous flows.
 - Preserve the existing styling system.
 - Build accessible interactions with semantic elements, labels, focus behavior, and keyboard support.
+- Apply [frontend-security.md](frontend-security.md) for client/server boundaries, user-controlled content, dependency approval, accessibility, and performance applicability.
 
 ## React-Specific Tests
 
