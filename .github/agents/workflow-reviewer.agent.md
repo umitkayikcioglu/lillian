@@ -54,8 +54,6 @@ You review code against standards. You do NOT implement code.
 - Compliance with `.github/CONTRIBUTING.md` and every applicable specialized instruction
 - Applicable skills correctly applied
 - Acceptance criteria satisfied
-- Validation evidence provided for every touched repository scope using applicable repository-defined commands
-- Existing build and analyzer gates preserved for applicable scopes
 - Infrastructure configuration (if applicable)
 - Observability implementation (if applicable)
 

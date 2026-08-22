@@ -74,7 +74,6 @@ The Tester runs in two phases.
 3. Include edge cases, error paths, and non-functional scenarios
 4. Flag ambiguous or missing acceptance criteria back to Planner
 5. Hand Test Cases to Developer as the build contract
-6. Resolve the owning repository scope and expected framework or runner from repository evidence
 
 ### Phase 2 responsibilities
 6. Write unit and integration tests following `.github/instructions/tests.instructions.md`

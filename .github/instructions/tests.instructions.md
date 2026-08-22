@@ -31,14 +31,6 @@ For .NET scopes, follow `.github/CONTRIBUTING.md` (`.NET Testing`) and the conve
 
 Use `{Method}_{Scenario}_{Expected}` for test method names.
 
-### Test project naming
-
-Use `{Organization}.{Product}.{Area}.{TestType}.Tests`.
-
-- Unit: `MyOrganization.MyProduct.MyArea.Unit.Tests`
-- Integration: `MyOrganization.MyProduct.MyArea.Integration.Tests`
-- End-to-end: `MyOrganization.MyProduct.MyArea.E2E.Tests`
-
 ### Unit tests
 
 - Use fakes or mocks for dependencies.

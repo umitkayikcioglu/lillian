@@ -25,8 +25,6 @@ This file defines the **agent workflow** for this repository — the flow, routi
 When a technology or artifact scope applies, load every matching instruction from `.github/instructions/`;
 each matching instruction is authoritative for its implementation-specific conventions.
 
-Validation commands are selected from detected repository configuration per touched scope; do not assume one global build, test, lint, or package-manager command.
-
 ---
 
 ## Workflow Diagram
