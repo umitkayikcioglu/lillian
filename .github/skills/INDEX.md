@@ -142,6 +142,29 @@ If multiple skills match a task, apply all applicable skills.
 
 ---
 
+## node-development
+- Path: `.github/skills/node-development/SKILL.md`
+- Applies to: Planner, Architect, Developer, Reviewer, Tester, Documenter
+- Mandatory when:
+  - Implementing or reviewing Node.js backend, CLI, service, or library code
+  - Resolving JavaScript or TypeScript runtime, package, workspace, or build validation
+  - Working with npm, pnpm, Yarn, Bun, Nx, or Turborepo Node scopes
+- Triggers:
+  - "Node.js"
+  - "Nodejs"
+  - "Node backend"
+  - "Node service"
+  - "Node CLI"
+  - "npm"
+  - "pnpm"
+  - "Yarn"
+  - "Bun"
+  - "Express"
+  - "Fastify"
+  - "NestJS"
+
+---
+
 ## observability
 - Path: `observability/SKILL.md`
 - Applies to: Architect, Developer
@@ -184,6 +207,43 @@ If multiple skills match a task, apply all applicable skills.
   - "validate a business idea"
   - "brutal second opinion"
 - Note: adversarial 5-persona council + Judge (~5-11 subagents per run); uses the `council-*` agent personas. Not for casual opinions or factual questions.
+
+---
+
+## project-instructions-bootstrap
+- Path: `.github/skills/project-instructions-bootstrap/SKILL.md`
+- Applies to: Planner, Architect, Developer, Reviewer, Tester, Documenter
+- Mandatory when:
+  - Bootstrapping project-owned contributing guidelines from Lillian
+  - Updating project-owned Copilot or Codex orchestration from detected repository evidence
+  - Creating `.github/CONTRIBUTING.md` and `.github/copilot-instructions.md` for a consuming repository
+- Triggers:
+  - "project-instructions-bootstrap"
+  - "bootstrap project instructions"
+  - "create contributing instructions"
+  - "update copilot instructions"
+  - "generate repository instructions"
+
+---
+
+## python-development
+- Path: `.github/skills/python-development/SKILL.md`
+- Applies to: Planner, Architect, Developer, Reviewer, Tester, Documenter
+- Mandatory when:
+  - Implementing or reviewing Python application, API, CLI, worker, or library code
+  - Resolving Python environment, package, test, type-check, build, or deployment validation
+  - Working with pyproject.toml, requirements files, Poetry, uv, pip-tools, or Pipenv projects
+- Triggers:
+  - "Python"
+  - "Python API"
+  - "Python CLI"
+  - "Python package"
+  - "FastAPI"
+  - "Django"
+  - "Flask"
+  - "pytest"
+  - "Poetry"
+  - "uv"
 
 ---
 
@@ -230,6 +290,27 @@ If multiple skills match a task, apply all applicable skills.
   - "STORM briefing"
   - "multi-perspective research"
 - Note: heavyweight pipeline (~9-11 subagents per run); for a simple factual lookup, answer directly instead.
+
+---
+
+## web-frontend-development
+- Path: `.github/skills/web-frontend-development/SKILL.md`
+- Applies to: Planner, Architect, Developer, Reviewer, Tester, Documenter
+- Mandatory when:
+  - Implementing or reviewing TypeScript frontend code
+  - Implementing or reviewing React, Next.js, or Angular applications
+  - Resolving frontend lint, type-check, test, build, package-manager, or workspace validation
+- Triggers:
+  - "web frontend"
+  - "frontend development"
+  - "TypeScript"
+  - "React"
+  - "Next.js"
+  - "Nextjs"
+  - "Angular"
+  - "frontend lint"
+  - "frontend test"
+  - "frontend build"
 
 ---
 

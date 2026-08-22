@@ -1,6 +1,6 @@
 ---
 name: workflow-tester
-description: "Drafts Test Cases as a build contract before Developer, then implements them as executable unit/integration tests after Developer passes Reviewer."
+description: "Drafts Test Cases as a build contract before Developer, then implements them as executable tests after Developer passes Reviewer."
 tools:
   - "Read"
   - "Glob"
@@ -51,7 +51,7 @@ The Tester runs in two phases.
 - Draft Test Cases from Phase 1
 - Developer's implementation to test
 
-**Output:** Executable unit/integration tests covering every Test Case from Phase 1, plus any edge cases surfaced during implementation. Test Cases document is updated if implementation reveals new scenarios.
+**Output:** Executable tests covering every Test Case from Phase 1 at the applicable repository-defined test levels, plus any edge cases surfaced during implementation. Test Cases document is updated if implementation reveals new scenarios.
 
 **Exit:** Request Reviewer review.
 
@@ -66,6 +66,7 @@ The Tester runs in two phases.
 3. Include edge cases, error paths, and non-functional scenarios
 4. Flag ambiguous or missing acceptance criteria back to Planner
 5. Hand Test Cases to Developer as the build contract
+6. Resolve the owning repository scope and expected framework or runner from repository evidence
 
 ### Phase 2 responsibilities
 6. Write unit and integration tests following `.claude/rules/tests.md`
@@ -81,6 +82,10 @@ The Tester runs in two phases.
 
 Created/updated: `[resolved repository-relative Test Cases document path, including its selected filename]`
 
+| Test Case / Scenario | Owning Scope | Test Level | Target Behavior | Proposed Test Artifact | Framework / Runner |
+|----------------------|--------------|------------|-----------------|------------------------|--------------------|
+| TC-001 | [scope] | [test level] | [observable behavior] | [path] | [repository-evidenced runner] |
+
 ### Automated Tests
 
 | Test Class | Test Count | Type |
@@ -95,12 +100,9 @@ Created/updated: `[resolved repository-relative Test Cases document path, includ
 
 ### Validation Results
 
-```
-dotnet test: PASS/FAIL
-Total: X tests
-Passed: X
-Failed: X
-```
+| Scope | Exact Validation Command | Result / Blocker |
+|-------|--------------------------|------------------|
+| [owning scope] | [exact command, or `None`] | [PASS/FAIL/Not configured/Not run, plus blocker if applicable] |
 
 ---
 

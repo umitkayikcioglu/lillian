@@ -77,6 +77,12 @@ When making decisions or reviewing changes, priorities are ranked as follows:
 * Meet accessibility requirements.
 * Avoid unnecessary visual and interaction customization.
 
+### Frontend UI
+
+* For TypeScript, React, Next.js, and Angular scopes, follow the repository's existing styling system and component architecture.
+* Do not introduce a new styling framework, component library, custom font, or JavaScript utility dependency without explicit approval.
+* Preserve accessibility semantics, keyboard behavior, focus behavior, and loading/error states for user-facing changes.
+
 ---
 
 ## Architecture and Design Principles
@@ -245,6 +251,13 @@ References:
 * Cover acceptance criteria, edge cases, and failure paths.
 * Keep tests deterministic, isolated, and repeatable.
 
+### Frontend Testing
+
+* For TypeScript, React, Next.js, and Angular scopes, use the test framework and scripts already declared by repository evidence.
+* Do not introduce Jest, Vitest, Playwright, Cypress, Testing Library, or other test dependencies without explicit approval.
+* Follow `.github/skills/web-frontend-development/references/testing.md` for cross-framework frontend test quality.
+* Follow framework-specific frontend references only when definitive framework evidence exists.
+
 ---
 
 ## Code Quality
@@ -257,6 +270,33 @@ References:
   * Formatting
   * Coverage threshold
   * Security scan
+
+### Frontend Validation
+
+For TypeScript, React, Next.js, and Angular scopes, validation commands must be resolved from repository evidence and reported separately:
+
+* lint
+* format check
+* type-check
+* unit tests
+* component tests
+* integration tests
+* end-to-end tests
+* build
+
+Never invent missing commands and never treat "not configured" as "passed."
+
+Frontend severity:
+
+* TypeScript compiler errors: **Blocker**
+* Lint errors: **Blocker**
+* New warnings in changed code: **Major**
+* New warnings when repository or CI enforces zero warnings: **Blocker**
+* Pre-existing warnings outside changed scope: baseline report only
+* Stale `@ts-expect-error`: **Blocker**
+* Broad or unjustified suppressions: **Blocker** when hiding type/lint defects or disabling file/project checks; otherwise **Major**
+
+Do not run repository-wide mutating formatters or auto-fix commands by default. Do not install lint, formatter, test, or build tooling without explicit approval.
 
 ---
 

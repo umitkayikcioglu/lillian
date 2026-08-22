@@ -187,6 +187,22 @@ If multiple skills match a task, apply all applicable skills.
 
 ---
 
+## project-instructions-bootstrap
+- Path: `.github/skills/project-instructions-bootstrap/SKILL.md`
+- Applies to: Planner, Architect, Developer, Reviewer, Tester, Documenter
+- Mandatory when:
+  - Bootstrapping project-owned contributing guidelines from Lillian
+  - Updating project-owned Copilot or Codex orchestration from detected repository evidence
+  - Creating `.github/CONTRIBUTING.md` and `.github/copilot-instructions.md` for a consuming repository
+- Triggers:
+  - "project-instructions-bootstrap"
+  - "bootstrap project instructions"
+  - "create contributing instructions"
+  - "update copilot instructions"
+  - "generate repository instructions"
+
+---
+
 ## session-handoff
 - Path: `session-handoff/SKILL.md`
 - Applies to: All agents
@@ -230,6 +246,27 @@ If multiple skills match a task, apply all applicable skills.
   - "STORM briefing"
   - "multi-perspective research"
 - Note: heavyweight pipeline (~9-11 subagents per run); for a simple factual lookup, answer directly instead.
+
+---
+
+## web-frontend-development
+- Path: `.github/skills/web-frontend-development/SKILL.md`
+- Applies to: Planner, Architect, Developer, Reviewer, Tester, Documenter
+- Mandatory when:
+  - Implementing or reviewing TypeScript frontend code
+  - Implementing or reviewing React, Next.js, or Angular applications
+  - Resolving frontend lint, type-check, test, build, package-manager, or workspace validation
+- Triggers:
+  - "web frontend"
+  - "frontend development"
+  - "TypeScript"
+  - "React"
+  - "Next.js"
+  - "Nextjs"
+  - "Angular"
+  - "frontend lint"
+  - "frontend test"
+  - "frontend build"
 
 ---
 

@@ -77,12 +77,11 @@ All approved designs:
 
 Before requesting review:
 
-1. Run build: `dotnet build`
-2. Run tests: `dotnet test`
-3. Run analyzers (as configured)
-4. Capture and include pass/fail evidence
+1. Discover repository-defined validation commands for every touched scope.
+2. Run all applicable verified commands for those scopes.
+3. Capture and include pass/fail evidence for each validation category.
 
-If execution is not possible, list exact commands and expected results.
+Report the scope, exact command, validation category, result, and any blocker or prerequisite. Do not invent missing commands. Do not report unavailable or unconfigured validation as PASS.
 
 ---
 
@@ -108,11 +107,9 @@ If execution is not possible, list exact commands and expected results.
 
 ### Validation Results
 
-```
-dotnet build: PASS/FAIL
-dotnet test: PASS/FAIL (X tests)
-Analyzers: PASS/FAIL
-```
+| Scope | Exact Command | Category | Result | Blocker / Prerequisite |
+|-------|---------------|----------|--------|------------------------|
+| [owning scope] | [exact command, or `None`] | [validation category] | PASS/FAIL/Not configured/Not run | [None or exact blocker] |
 
 ---
 
@@ -141,5 +138,5 @@ Analyzers: PASS/FAIL
 
 Request Reviewer review when:
 - Implementation complete
-- Validation passes
+- Applicable validation passes or missing/unavailable commands are explicitly reported with evidence
 - All acceptance criteria addressed

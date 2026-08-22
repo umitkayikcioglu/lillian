@@ -1,6 +1,18 @@
 ---
 paths:
   - "**/*Tests*/**"
+  - "**/tests/**"
+  - "**/__tests__/**"
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.spec.ts"
+  - "**/*.spec.tsx"
+  - "**/*.test.js"
+  - "**/*.test.jsx"
+  - "**/*.spec.js"
+  - "**/*.spec.jsx"
+  - "**/*.Tests.cs"
+  - "**/*Tests.cs"
 ---
 
 # Test Instructions
