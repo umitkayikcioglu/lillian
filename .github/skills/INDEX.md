@@ -143,7 +143,7 @@ If multiple skills match a task, apply all applicable skills.
 ---
 
 ## node-development
-- Path: `.github/skills/node-development/SKILL.md`
+- Path: `node-development/SKILL.md`
 - Applies to: Planner, Architect, Developer, Reviewer, Tester, Documenter
 - Mandatory when:
   - Implementing or reviewing Node.js backend, CLI, service, or library code
@@ -211,7 +211,7 @@ If multiple skills match a task, apply all applicable skills.
 ---
 
 ## project-instructions-bootstrap
-- Path: `.github/skills/project-instructions-bootstrap/SKILL.md`
+- Path: `project-instructions-bootstrap/SKILL.md`
 - Applies to: Planner, Architect, Developer, Reviewer, Tester, Documenter
 - Mandatory when:
   - Bootstrapping project-owned contributing guidelines from Lillian
@@ -227,7 +227,7 @@ If multiple skills match a task, apply all applicable skills.
 ---
 
 ## python-development
-- Path: `.github/skills/python-development/SKILL.md`
+- Path: `python-development/SKILL.md`
 - Applies to: Planner, Architect, Developer, Reviewer, Tester, Documenter
 - Mandatory when:
   - Implementing or reviewing Python application, API, CLI, worker, or library code
@@ -294,7 +294,7 @@ If multiple skills match a task, apply all applicable skills.
 ---
 
 ## web-frontend-development
-- Path: `.github/skills/web-frontend-development/SKILL.md`
+- Path: `web-frontend-development/SKILL.md`
 - Applies to: Planner, Architect, Developer, Reviewer, Tester, Documenter
 - Mandatory when:
   - Implementing or reviewing TypeScript frontend code
