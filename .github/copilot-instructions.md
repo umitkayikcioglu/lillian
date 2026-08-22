@@ -3,7 +3,26 @@ applyTo: "**"
 ---
 
 > [!TIP]
-> Engineering standards live in `.github/CONTRIBUTING.md`. If anything conflicts with it, CONTRIBUTING.md wins.
+> Cross-cutting engineering principles live in `.github/CONTRIBUTING.md`. For a technology or artifact scope,
+> load every matching `.github/instructions/*.instructions.md`; those files own the specialized implementation
+> rules for their scope. Use `.github/skills/INDEX.md` to route reusable workflows. Resolve physical placement,
+> project names, and filenames through `.github/skills/solution-structure/SKILL.md`.
+> If two applicable authorities conflict, stop and reconcile the source documents instead of silently choosing one.
+
+# Authored Guidance DRY Gate
+
+Before editing any authored guidance under `.github/`:
+
+1. Search authored `.github/` sources for every concept being changed.
+2. Identify exactly one normative owner for each concept before writing.
+3. Extend the owner; consumers must link to its exact complete section.
+4. Consumers may contain workflow-specific instructions or executable examples, but must not redefine paths,
+   filenames, tokens, naming formulas, applicability conditions, policy tables, or verification checklists.
+5. If no owner exists, establish one explicitly before updating consumers.
+6. If authorities overlap or conflict, stop and reconcile them before implementation.
+7. Before completion, rescan the changed guidance against its parent commit and confirm that every new rule has
+   one owner.
+8. Audit authored `.github/` only. Do not manually update generated mirrors or run platform synchronization.
 
 # Workflow Orchestration
 

@@ -124,3 +124,9 @@ If the resolution does not work or makes things worse:
 - [Link to related runbook]
 - [Link to architecture documentation]
 - [Link to service README]
+
+## Revision History
+
+| Date | Author | Changes |
+|------|--------|---------|
+| [YYYYMMDD] | [Name] | Initial version |

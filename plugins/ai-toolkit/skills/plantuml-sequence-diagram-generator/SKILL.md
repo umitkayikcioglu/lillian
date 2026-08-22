@@ -29,6 +29,8 @@ Before generating, ask:
 2. **Title** - Diagram subject (e.g., "Service Flow for XYZ Feature")
 3. **Participant Groupings** - Which services belong together? (backend, messaging, external)
 4. **Classification** - Header label (e.g., "Confidential\nINTERNAL USE ONLY", "Public")
+5. **Interaction architecture** - Which API adapter/protocol and persistence interactions are selected by the
+   design or existing implementation?
 
 ## Template Structure
 
@@ -176,15 +178,18 @@ db --> wrk: <<recordSet>>
 
 ### HTTP Endpoints
 
-```plantuml
-' OData (primary)
-wrk -> svc: <<createRecord>> \n""POST /odata/resource""
-wrk -> svc: <<updateRecord>> \n""PATCH /odata/resource(**{id}**)""
-wrk -> svc: <<query>> \n""GET /odata/resource?$top=1""
+Read the selected adapter and exact method/route from the documented implementation or the
+[API adapter authority](../dotnet-service-generator/references/api-patterns.md#select-the-api-adapter). This
+skill visualizes that decision; it does not select or rename the API surface.
 
-' REST
-wrk -> svc: <<request>> \n""POST /api/classify""
+```plantuml
+' Show the actual selected interaction; do not derive a route in the diagram.
+wrk -> svc: <<request>> \n""{ActualHttpMethod} {ActualRoute}""
 ```
+
+`{ActualHttpMethod}` and `{ActualRoute}` are diagram inputs copied from the selected implementation, not route
+naming conventions. Represent a direct database interaction only when that participant actually owns it; API
+adapter selection and persistence access are independent architectural decisions.
 
 ### Arrow Types
 
@@ -233,7 +238,8 @@ destroy component1  ' lifeline end
 
 1. Hex notes ALWAYS above sender, NEVER on receiver
 2. Control structure text MUST be readable (use appropriate `<color:>` tags)
-3. OData endpoints preferred over raw SQL calls
+3. Reflect the selected API adapter/protocol and actual persistence boundary; never substitute OData for a
+   direct database interaction, or raw SQL for an API call, merely as a diagram preference
 4. Use rnote spanning components for WHERE clauses
 5. Double `====` in hex: Parameters → Unique IDs → Fields
 6. Parameter values: `<color:#795548>`

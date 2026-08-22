@@ -439,7 +439,7 @@ See [.github/skills/documentation-generator/SKILL.md](.github/skills/documentati
 |-------|---------|--------|
 | **Planner** | Analyzes requests and creates actionable plans | Plan with acceptance criteria |
 | **Architect** | Designs system architecture and technical specifications | Technical design, observability requirements |
-| **Designer** | Creates UI/UX mockups and component designs | HTML/Tailwind mockups |
+| **Designer** | Creates UI/UX mockups and component designs | HTML mockups |
 | **DBA** | Designs database schemas and migration strategies | Schema design, migrations, indexes |
 | **Developer** | Implements code, infrastructure, and observability | Code, Docker, K8s, dashboards, runbooks |
 | **Reviewer** | Reviews implementation against standards | PASS/FAIL verdict with feedback |
@@ -506,6 +506,7 @@ root/
 The repository includes production-ready skills for engineering, documentation, and decision-making tasks. The list below is **generated** by the sync script from each skill's `summary:` frontmatter:
 
 <!-- BEGIN GENERATED SKILLS LIST (sync-ai-platforms.ps1) -->
+- **cross-vendor-examine**: Convenes the AI assistants installed on the machine, each from a different vendor, as independent reviewers; relays their output verbatim and synthesizes agreement, disagreement, and error. Symmetric — any assistant can host.
 - **documentation-generator**: Document templates for ADRs, RFCs, design docs, runbooks, post incident reviews, SOPs, handovers, business cases, test plans, test cases, role briefs, and more.
 - **dotnet-service-generator**: Interactive scaffolder for .NET service modules with observability and DI conventions.
 - **excalidraw-diagram-generator**: Excalidraw diagram JSON files that make visual arguments, with automatic PNG rendering via a bundled renderer.
@@ -519,7 +520,7 @@ The repository includes production-ready skills for engineering, documentation, 
 - **project-instructions-bootstrap**: Safely bootstraps repo-owned CONTRIBUTING.md and copilot-instructions.md files from bounded stack and command evidence.
 - **python-development**: Python application, API, CLI, library, and packaging development with manifest-first project detection and repository-defined validation.
 - **session-handoff**: Structured end-of-session summary so a fresh agent can continue seamlessly after the context is cleared. Chat-only output.
-- **solution-structure**: Source of truth for the opinionated .NET solution folder structure (root scaffolding, /docs, /src/Modules/Component/Service hierarchy, /tools/Kubernetes, /tests) and the documentation placement rules that govern items inside it.
+- **solution-structure**: Source of truth for the opinionated .NET solution folder structure, including documentation and test naming, deployable runners, modular or standalone services, optional shared persistence projects, dashboards, Kubernetes, and tests.
 - **storm-research**: Multi-perspective, citation-verified HTML research briefing — five expert lenses, contradiction map, synthesized report, adversarial peer review with primary-source verification.
 - **web-frontend-development**: TypeScript, React, Next.js, and Angular frontend development with manifest-first stack detection and scope-aware validation.
 - **work-item-generator**: Interactive generator for work items (initiatives, epics, features, stories, bugs, spikes, enhancements, tasks) that gathers context through targeted questions and produces structured documents.

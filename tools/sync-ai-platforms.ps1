@@ -11,7 +11,6 @@
       prompts/*.prompt.md             -> plugins/ai-toolkit/commands/*.md, .claude/commands/*.md, .agents/workflows/*.md
       agents/*.agent.md               -> plugins/ai-toolkit/agents/*.md, .claude/agents/*.md
       instructions/*.instructions.md  -> .claude/rules/*.md, .agents/rules/*.md, plugins/ai-toolkit/rules/*.md
-      CONTRIBUTING.md                 -> (stays at .github/)
       copilot-instructions.md         -> (stays at .github/)
 
     The plugin folder is the single generated bundle (installed by Claude Code,
@@ -214,7 +213,7 @@ function Rewrite-PathsForClaudeProject {
     # ${CLAUDE_PLUGIN_ROOT} does not exist outside an installed plugin, so every
     # reference points at the repo-level location Claude Code actually reads.
     # `.github/skills/` is left alone: it is symlinked into consumer repos and
-    # resolves there (same reasoning as Rewrite-PathsForAntigravity).
+    # resolves there (same reasoning as Rewrite-PathsForAntigravityProject).
     $Body = $Body -replace '\.github/agents/(\w[\w-]*)\.agent\.md', '.claude/agents/$1.md'
     $Body = $Body -replace '\.github/agents/([^`\s]*?)\.agent\.md', '.claude/agents/$1.md'
     $Body = $Body -replace '\.github/agents/', '.claude/agents/'
@@ -230,7 +229,7 @@ function Rewrite-PathsForClaudeProject {
     return $Body
 }
 
-function Rewrite-PathsForAntigravity {
+function Rewrite-PathsForAntigravityProject {
     param([string]$Body)
 
     # Prompts become workflows; skills/instructions refs keep their .github/
@@ -243,6 +242,14 @@ function Rewrite-PathsForAntigravity {
     # Shared files (AGENTS.md is read natively by Antigravity since v1.20.5)
     $Body = $Body -replace '\.github/copilot-instructions\.md', 'AGENTS.md'
     return $Body
+}
+
+function Rewrite-PathsForAntigravityPlugin {
+	param([string]$Body)
+
+	$Body = Rewrite-PathsForAntigravityProject $Body
+	$Body = $Body -replace '\.github/skills/', '../skills/'
+	return $Body
 }
 
 # --- Tool Mapping (Copilot -> Claude) ---
@@ -286,7 +293,9 @@ function Copy-DirectoryClean {
         [string]$Destination
     )
 
-    if (-not (Test-Path $Source)) { return 0 }
+	if (-not (Test-Path -LiteralPath $Source -PathType Container)) {
+		throw "Required source directory is missing: $Source"
+	}
 
     # Remove existing target (whether directory or symlink)
     if (Test-Path $Destination) {
@@ -306,19 +315,36 @@ function Copy-DirectoryClean {
 # --- Main Sync Logic ---
 
 $stats = @{ Instructions = 0; Prompts = 0; Agents = 0; Skills = 0; GithubFiles = 0 }
+$BasePath = [System.IO.Path]::GetFullPath($BasePath)
 
-# Resolve source: either BasePath itself (base repo) or a submodule path
-if ($SourcePath -eq "") {
-    $srcRoot = $BasePath
-} else {
-    $srcRoot = Join-Path $BasePath $SourcePath
+# Resolve source: either BasePath itself (base repo) or a submodule path.
+if ([string]::IsNullOrWhiteSpace($SourcePath)) {
+	$srcRoot = $BasePath
 }
-
+else {
+	$srcRoot = Join-Path $BasePath $SourcePath
+}
 $srcGithub = Join-Path $srcRoot ".github"
 
 if (-not (Test-Path $srcGithub)) {
-    Write-Error "Source .github/ not found at: $srcGithub"
-    exit 1
+	Write-Error "Source .github/ not found at: $srcGithub"
+	exit 1
+}
+
+$sourceSkillsRoot = Join-Path $srcGithub "skills"
+if (-not (Test-Path -LiteralPath $sourceSkillsRoot -PathType Container)) {
+	throw "Required source directory is missing: $sourceSkillsRoot"
+}
+foreach ($skillDirectory in Get-ChildItem -LiteralPath $sourceSkillsRoot -Directory) {
+	if (-not (Test-Path -LiteralPath (Join-Path $skillDirectory.FullName "SKILL.md") -PathType Leaf)) {
+		throw "Skill '$($skillDirectory.Name)' is missing its top-level SKILL.md."
+	}
+}
+foreach ($skillFile in Get-ChildItem -LiteralPath $sourceSkillsRoot -Recurse -File -Filter "*.md") {
+	if ($skillFile.FullName -eq (Join-Path $sourceSkillsRoot "INDEX.md")) { continue }
+	if ([System.IO.File]::ReadAllText($skillFile.FullName) -match '\.github/skills/') {
+		throw "Verbatim plugin skill '$($skillFile.FullName)' contains a repo-root-only path. Use a file-relative path."
+	}
 }
 
 Write-Host "Syncing AI platform configs ..." -ForegroundColor Cyan
@@ -327,42 +353,40 @@ Write-Host "  Target: $BasePath" -ForegroundColor DarkGray
 
 # --- 0. Consumer repo: copy .github/ content from submodule ---
 
-if ($SourcePath -ne "") {
-    $targetGithub = Join-Path $BasePath ".github"
-    New-Item -ItemType Directory -Force -Path $targetGithub | Out-Null
+if (-not [string]::IsNullOrWhiteSpace($SourcePath)) {
+	$targetGithub = Join-Path $BasePath ".github"
+	New-Item -ItemType Directory -Force -Path $targetGithub | Out-Null
 
-    # Copy directories
-    foreach ($dir in @("skills", "agents", "instructions", "prompts")) {
-        $src = Join-Path $srcGithub $dir
-        if (Test-Path $src) {
-            $count = Copy-DirectoryClean $src (Join-Path $targetGithub $dir)
-            $stats.GithubFiles += $count
-        }
-    }
+	foreach ($directoryName in @("skills", "agents", "instructions", "prompts")) {
+		$sourceDirectory = Join-Path $srcGithub $directoryName
+		if (Test-Path $sourceDirectory) {
+			$stats.GithubFiles += Copy-DirectoryClean $sourceDirectory (Join-Path $targetGithub $directoryName)
+		}
+	}
 
-    # Copy files
-    foreach ($file in @("copilot-instructions.md", "CONTRIBUTING.md")) {
-        $src = Join-Path $srcGithub $file
-        if (Test-Path $src) {
-            Copy-Item -Path $src -Destination (Join-Path $targetGithub $file) -Force
-            $stats.GithubFiles++
-        }
-    }
+	foreach ($fileName in @("copilot-instructions.md", "CONTRIBUTING.md")) {
+		$sourceFile = Join-Path $srcGithub $fileName
+		if (Test-Path $sourceFile) {
+			Copy-Item -Path $sourceFile -Destination (Join-Path $targetGithub $fileName) -Force
+			$stats.GithubFiles++
+		}
+	}
 
-    # Copy root entry points
-    foreach ($file in @("CLAUDE.md", "AGENTS.md")) {
-        $src = Join-Path $srcRoot $file
-        if (Test-Path $src) {
-            Copy-Item -Path $src -Destination (Join-Path $BasePath $file) -Force
-            $stats.GithubFiles++
-        }
-    }
+	foreach ($fileName in @("CLAUDE.md", "AGENTS.md")) {
+		$sourceFile = Join-Path $srcRoot $fileName
+		if (Test-Path $sourceFile) {
+			Copy-Item -Path $sourceFile -Destination (Join-Path $BasePath $fileName) -Force
+			$stats.GithubFiles++
+		}
+	}
 
-    Write-Host "  .github/ content copied from submodule ($($stats.GithubFiles) files)" -ForegroundColor DarkGray
+	Write-Host "  .github/ content copied from submodule ($($stats.GithubFiles) files)" -ForegroundColor DarkGray
 }
 
-# Use the target .github/ as source for all transforms
+# Use the target .github/ as the source for all transforms.
 $srcGithub = Join-Path $BasePath ".github"
+
+# --- 0.5. Generated bundle root ---
 
 # The plugin folder is the single generated bundle: Claude Code, Codex, and
 # Antigravity each install it via their own manifest (.claude-plugin/plugin.json,
@@ -383,13 +407,28 @@ if (-not (Test-Path $pluginRoot)) {
 # Edit the frontmatter, not the generated blocks.
 
 function Replace-GeneratedBlock {
-    param([string]$Path, [string]$Begin, [string]$End, [string]$NewContent)
-    if (-not (Test-Path $Path)) { return $false }
-    $text = [System.IO.File]::ReadAllText($Path)
-    $pattern = "(?s)" + [regex]::Escape($Begin) + ".*?" + [regex]::Escape($End)
-    if ($text -notmatch $pattern) { return $false }
-    $replacement = "$Begin`n$NewContent$End"
-    $text = [regex]::Replace($text, $pattern, { param($m) $replacement })
+	param(
+		[string]$Path,
+		[string]$Begin,
+		[string]$End,
+		[string]$NewContent,
+		[bool]$Required = $true
+	)
+	if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+		if (-not $Required) { return $false }
+		throw "Required generated-block host is missing: $Path"
+	}
+	$text = [System.IO.File]::ReadAllText($Path)
+	$pattern = "(?s)" + [regex]::Escape($Begin) + ".*?" + [regex]::Escape($End)
+	$matches = [regex]::Matches($text, $pattern)
+	$beginCount = [regex]::Matches($text, [regex]::Escape($Begin)).Count
+	$endCount = [regex]::Matches($text, [regex]::Escape($End)).Count
+	if ($matches.Count -ne 1 -or $beginCount -ne 1 -or $endCount -ne 1) {
+		if (-not $Required) { return $false }
+		throw "Expected exactly one ordered generated block in $Path"
+	}
+	$replacement = "$Begin`n$NewContent$End"
+	$text = [regex]::Replace($text, $pattern, { param($match) $replacement })
     $text = $text -replace "`r`n", "`n"
     [System.IO.File]::WriteAllText($Path, $text, [System.Text.UTF8Encoding]::new($false))
     return $true
@@ -417,7 +456,7 @@ if (Test-Path $skillsRoot) {
 $indexBlock = ""
 foreach ($s in $catalog) {
     $indexBlock += "`n## $($s.Name)`n"
-    $indexBlock += "- Path: ``.github/skills/$($s.Name)/SKILL.md```n"
+    $indexBlock += "- Path: ``$($s.Name)/SKILL.md```n"
     if ($s.AppliesTo)              { $indexBlock += "- Applies to: $($s.AppliesTo)`n" }
     if (@($s.MandatoryWhen).Count -gt 0) {
         $indexBlock += "- Mandatory when:`n"
@@ -439,7 +478,8 @@ foreach ($s in $catalog) {
     $readmeBlock += "- **$($s.Name)**: $($s.Summary)`n"
 }
 $readmePath = Join-Path $BasePath "README.md"
-$stats.ReadmeGenerated = Replace-GeneratedBlock $readmePath "<!-- BEGIN GENERATED SKILLS LIST (sync-ai-platforms.ps1) -->" "<!-- END GENERATED SKILLS LIST -->" $readmeBlock
+$readmeBlockRequired = [string]::IsNullOrWhiteSpace($SourcePath)
+$stats.ReadmeGenerated = Replace-GeneratedBlock $readmePath "<!-- BEGIN GENERATED SKILLS LIST (sync-ai-platforms.ps1) -->" "<!-- END GENERATED SKILLS LIST -->" $readmeBlock $readmeBlockRequired
 
 # --- 1. Skills -> plugin skills/ (verbatim copy) ---
 #
@@ -461,6 +501,7 @@ $claudeDir = Join-Path $BasePath ".claude\rules"
 $antigravityRulesDir = Join-Path $BasePath ".agents\rules"
 $pluginRulesDir = Join-Path $pluginRoot "rules"
 
+if (-not (Test-Path -LiteralPath $srcDir -PathType Container)) { throw "Required source directory is missing: $srcDir" }
 if (Test-Path $claudeDir) { Get-ChildItem $claudeDir -Filter "*.md" | Remove-Item -Force }
 if (Test-Path $antigravityRulesDir) { Get-ChildItem $antigravityRulesDir -Filter "*.md" | Remove-Item -Force }
 if (Test-Path $pluginRulesDir) { Get-ChildItem $pluginRulesDir -Filter "*.md" | Remove-Item -Force }
@@ -497,9 +538,15 @@ if (Test-Path $srcDir) {
                 $antigravityFm["globs"] = ($applyTo -join ", ")
             }
         }
-        $antigravityBody = Rewrite-PathsForAntigravity $parsed.Body
-        Write-SyncedFile (Join-Path $pluginRulesDir $cleanName) (Format-Frontmatter $antigravityFm) $antigravityBody
-        Write-SyncedFile (Join-Path $antigravityRulesDir $cleanName) (Format-Frontmatter $antigravityFm) $antigravityBody
+		$projectBody = Rewrite-PathsForAntigravityProject $parsed.Body
+		$pluginBody = if ($cleanName -eq "generated-output.md") {
+			$projectBody
+		}
+		else {
+			Rewrite-PathsForAntigravityPlugin $parsed.Body
+		}
+		Write-SyncedFile (Join-Path $pluginRulesDir $cleanName) (Format-Frontmatter $antigravityFm) $pluginBody
+		Write-SyncedFile (Join-Path $antigravityRulesDir $cleanName) (Format-Frontmatter $antigravityFm) $projectBody
 
         $stats.Instructions++
     }
@@ -516,6 +563,7 @@ $pluginCommandsDir = Join-Path $pluginRoot "commands"
 $claudeCommandsDir = Join-Path $BasePath ".claude\commands"
 $antigravityDir = Join-Path $BasePath ".agents\workflows"
 
+if (-not (Test-Path -LiteralPath $srcDir -PathType Container)) { throw "Required source directory is missing: $srcDir" }
 if (Test-Path $pluginCommandsDir) { Get-ChildItem $pluginCommandsDir -Filter "*.md" | Remove-Item -Force }
 if (Test-Path $claudeCommandsDir) { Get-ChildItem $claudeCommandsDir -Filter "*.md" | Remove-Item -Force }
 if (Test-Path $antigravityDir) { Get-ChildItem $antigravityDir -Filter "*.md" | Remove-Item -Force }
@@ -538,7 +586,7 @@ if (Test-Path $srcDir) {
         if ($parsed.Frontmatter.Contains("description")) {
             $antigravityFm["description"] = $parsed.Frontmatter["description"]
         }
-        Write-SyncedFile (Join-Path $antigravityDir $cleanName) (Format-Frontmatter $antigravityFm) (Rewrite-PathsForAntigravity $parsed.Body)
+		Write-SyncedFile (Join-Path $antigravityDir $cleanName) (Format-Frontmatter $antigravityFm) (Rewrite-PathsForAntigravityProject $parsed.Body)
 
         $stats.Prompts++
     }
@@ -553,6 +601,7 @@ $srcDir = Join-Path $srcGithub "agents"
 $pluginAgentsDir = Join-Path $pluginRoot "agents"
 $claudeAgentsDir = Join-Path $BasePath ".claude\agents"
 
+if (-not (Test-Path -LiteralPath $srcDir -PathType Container)) { throw "Required source directory is missing: $srcDir" }
 if (Test-Path $pluginAgentsDir) { Get-ChildItem $pluginAgentsDir -Filter "*.md" | Remove-Item -Force }
 if (Test-Path $claudeAgentsDir) { Get-ChildItem $claudeAgentsDir -Filter "*.md" | Remove-Item -Force }
 
@@ -599,6 +648,16 @@ if (Test-Path $srcDir) {
     }
 }
 
+# Installed plugin guidance must not depend on Lillian's repository-root paths.
+foreach ($directory in @($pluginRulesDir, $pluginCommandsDir, $pluginAgentsDir)) {
+	foreach ($file in Get-ChildItem -LiteralPath $directory -Recurse -File -Filter "*.md") {
+		if ($file.FullName -eq (Join-Path $pluginRulesDir "generated-output.md")) { continue }
+		if ([System.IO.File]::ReadAllText($file.FullName) -match '\.github/skills/') {
+			throw "Generated plugin file '$($file.FullName)' contains a repo-root-only path."
+		}
+	}
+}
+
 # --- Summary ---
 
 Write-Host ""
@@ -608,7 +667,7 @@ Write-Host "  Instructions -> Rules:     $($stats.Instructions) files (.claude/r
 Write-Host "  Prompts -> Commands:       $($stats.Prompts) files (plugin + .claude/commands + .agents/workflows)" -ForegroundColor White
 Write-Host "  Agents -> Personas:        $($stats.Agents) files (plugin + .claude/agents)" -ForegroundColor White
 if ($stats.GithubFiles -gt 0) {
-    Write-Host "  .github/ (from submodule): $($stats.GithubFiles) files" -ForegroundColor White
+	Write-Host "  .github/ (from submodule): $($stats.GithubFiles) files" -ForegroundColor White
 }
 if ($stats.Skills -eq 0) {
     Write-Host "  WARNING: no skills copied into the plugin" -ForegroundColor Yellow

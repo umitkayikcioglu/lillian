@@ -82,3 +82,9 @@
 ## Cloud Providers
 
 * **Microsoft Azure**
+
+## Revision History
+
+| Date | Author | Changes |
+|------|--------|---------|
+| [YYYYMMDD] | [Name] | Initial version |

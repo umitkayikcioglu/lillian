@@ -6,7 +6,7 @@ description: "Standalone deep-dive audit across 8 quality dimensions, using the 
 
 Perform a deep, thorough code review examining all aspects of code quality.
 
-This is the **standalone deep audit** — for the workflow review gate, use `/code-review` instead. Load `.claude/agents/workflow-reviewer.md` first: its severity scale (Blocker/Major/Minor) and output contract apply here too; the dimensions below define the audit's breadth, not a different vocabulary.
+This is the **standalone deep audit** — for the workflow review gate, use `/code-review` instead. Load `${CLAUDE_PLUGIN_ROOT}/agents/workflow-reviewer.md` first: its severity scale (Blocker/Major/Minor) and output contract apply here too; the dimensions below define the audit's breadth, not a different vocabulary.
 
 ## Scope
 
@@ -16,7 +16,7 @@ Identify the code to review (files, PR, or specified scope).
 
 ### 1. Code Quality
 - Readability and clarity
-- Naming conventions (per `.github/CONTRIBUTING.md`)
+- Naming conventions from the applicable owner; use `solution-structure` for physical project and file names
 - Code organization and structure
 - DRY principle adherence
 - SOLID principles adherence
@@ -67,7 +67,8 @@ Identify the code to review (files, PR, or specified scope).
 
 ### 8. Standards Compliance
 - `.github/CONTRIBUTING.md` adherence
-- Applicable skills from `.github/skills/INDEX.md` applied correctly
+- Every matching `.claude/rules/*.md` applied correctly
+- Applicable skills from `${CLAUDE_PLUGIN_ROOT}/skills/INDEX.md` applied correctly
 
 ## Output Format
 

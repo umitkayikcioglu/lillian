@@ -1,8 +1,9 @@
 ---
-description: "Analyze a repository to understand its purpose, architecture, and how it works"
+mode: agent
+description: Analyze a repository to understand its purpose, architecture, and how it works
 ---
 
-# Understand Repository
+# Repository Analyzer
 
 Analyze this repository to understand what it does, how it's structured, and how it works.
 
@@ -13,9 +14,11 @@ Analyze this repository to understand what it does, how it's structured, and how
 Start with these files (in order):
 - `README.md` - Purpose and usage
 - `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` - AI instructions (if present)
-- `AGENTS.md` - Development standards
-- `.github/CONTRIBUTING.md` - Engineering standards
-- `package.json`, `*.csproj`, `*.sln` - Dependencies and project structure
+- `.github/copilot-instructions.md` - Workflow orchestration and authority routing
+- `.github/CONTRIBUTING.md` - Broad cross-cutting engineering and quality principles
+- `.github/instructions/*.instructions.md` - Applicable technology and artifact implementation conventions
+- `.github/skills/INDEX.md` - Skill routing and specialized authority discovery
+- `package.json`, `*.csproj`, `*.slnx`, and legacy `*.sln` - Dependencies and project structure
 
 ### 2. Project Structure
 

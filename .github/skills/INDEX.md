@@ -7,8 +7,27 @@ If multiple skills match a task, apply all applicable skills.
 
 <!-- BEGIN GENERATED SKILLS (edit SKILL.md frontmatter, not this block) -->
 
+## cross-vendor-examine
+- Path: `cross-vendor-examine/SKILL.md`
+- Applies to: All agents
+- Mandatory when:
+  - The user wants a document, plan, or decision reviewed by an AI other than the one they are talking to
+  - The user wants cross-vendor disagreement surfaced before committing to something
+- Triggers:
+  - "cross-vendor-examine"
+  - "second opinion"
+  - "discuss with codex"
+  - "ask gemini"
+  - "run it past claude"
+  - "check with the other model"
+  - "cross-model review"
+  - "cross-vendor review"
+- Note: cross-vendor peer review over local CLIs; each round is a paid API call on the user's own account for that vendor. Not for factual questions or single-answer problems.
+
+---
+
 ## documentation-generator
-- Path: `.github/skills/documentation-generator/SKILL.md`
+- Path: `documentation-generator/SKILL.md`
 - Applies to: Documenter, Planner, Architect, Developer, Tester
 - Mandatory when:
   - Creating ADRs or RFCs
@@ -44,7 +63,7 @@ If multiple skills match a task, apply all applicable skills.
 ---
 
 ## dotnet-service-generator
-- Path: `.github/skills/dotnet-service-generator/SKILL.md`
+- Path: `dotnet-service-generator/SKILL.md`
 - Applies to: Developer, Architect
 - Mandatory when:
   - Creating a new .NET service
@@ -58,7 +77,7 @@ If multiple skills match a task, apply all applicable skills.
 ---
 
 ## excalidraw-diagram-generator
-- Path: `.github/skills/excalidraw-diagram-generator/SKILL.md`
+- Path: `excalidraw-diagram-generator/SKILL.md`
 - Applies to: Developer, Architect, Documenter
 - Mandatory when:
   - Creating visual diagrams of workflows, architectures, or concepts
@@ -73,7 +92,7 @@ If multiple skills match a task, apply all applicable skills.
 ---
 
 ## infrastructure
-- Path: `.github/skills/infrastructure/SKILL.md`
+- Path: `infrastructure/SKILL.md`
 - Applies to: Developer, Reviewer
 - Mandatory when:
   - Creating or updating Dockerfiles
@@ -89,7 +108,7 @@ If multiple skills match a task, apply all applicable skills.
 ---
 
 ## mssql-bulk-data-operations
-- Path: `.github/skills/mssql-bulk-data-operations/SKILL.md`
+- Path: `mssql-bulk-data-operations/SKILL.md`
 - Applies to: Developer, DBA
 - Mandatory when:
   - Performing large-scale UPDATE or DELETE operations (millions of rows)
@@ -109,8 +128,8 @@ If multiple skills match a task, apply all applicable skills.
 ---
 
 ## mssql-table-scaffolder
-- Path: `.github/skills/mssql-table-scaffolder/SKILL.md`
-- Applies to: Developer
+- Path: `mssql-table-scaffolder/SKILL.md`
+- Applies to: Developer, DBA
 - Mandatory when:
   - Creating or standardizing MSSQL tables
   - Adding new schema artifacts
@@ -147,7 +166,7 @@ If multiple skills match a task, apply all applicable skills.
 ---
 
 ## observability
-- Path: `.github/skills/observability/SKILL.md`
+- Path: `observability/SKILL.md`
 - Applies to: Architect, Developer
 - Mandatory when:
   - Defining SLIs or observability requirements
@@ -164,7 +183,7 @@ If multiple skills match a task, apply all applicable skills.
 ---
 
 ## plantuml-sequence-diagram-generator
-- Path: `.github/skills/plantuml-sequence-diagram-generator/SKILL.md`
+- Path: `plantuml-sequence-diagram-generator/SKILL.md`
 - Applies to: Planner, Architect, Developer
 - Mandatory when:
   - A sequence or interaction diagram is requested
@@ -177,7 +196,7 @@ If multiple skills match a task, apply all applicable skills.
 ---
 
 ## pressure-test
-- Path: `.github/skills/pressure-test/SKILL.md`
+- Path: `pressure-test/SKILL.md`
 - Applies to: All agents
 - Mandatory when:
   - The user wants an idea or decision adversarially stress-tested before committing (GO / RESHAPE / KILL verdict)
@@ -229,7 +248,7 @@ If multiple skills match a task, apply all applicable skills.
 ---
 
 ## session-handoff
-- Path: `.github/skills/session-handoff/SKILL.md`
+- Path: `session-handoff/SKILL.md`
 - Applies to: All agents
 - Mandatory when:
   - The user wants to wrap up the session or hand off before clearing context
@@ -244,8 +263,8 @@ If multiple skills match a task, apply all applicable skills.
 ---
 
 ## solution-structure
-- Path: `.github/skills/solution-structure/SKILL.md`
-- Applies to: Developer, Architect, Documenter, DBA, Reviewer
+- Path: `solution-structure/SKILL.md`
+- Applies to: Developer, Architect, Documenter, Tester, DBA, Reviewer
 - Mandatory when:
   - Deciding where a file/folder goes inside the .NET solution
   - Placing a doc, dashboard, Kubernetes manifest, embedded SQL, or service scaffold
@@ -261,7 +280,7 @@ If multiple skills match a task, apply all applicable skills.
 ---
 
 ## storm-research
-- Path: `.github/skills/storm-research/SKILL.md`
+- Path: `storm-research/SKILL.md`
 - Applies to: All agents
 - Mandatory when:
   - A multi-perspective, citation-verified research briefing is requested
@@ -296,7 +315,7 @@ If multiple skills match a task, apply all applicable skills.
 ---
 
 ## work-item-generator
-- Path: `.github/skills/work-item-generator/SKILL.md`
+- Path: `work-item-generator/SKILL.md`
 - Applies to: Planner, Developer, Architect
 - Mandatory when:
   - Creating work items (initiatives, epics, features, stories, bugs, spikes, enhancements, tasks)
@@ -320,7 +339,7 @@ If multiple skills match a task, apply all applicable skills.
 ---
 
 ## workspace-productivity
-- Path: `.github/skills/workspace-productivity/SKILL.md`
+- Path: `workspace-productivity/SKILL.md`
 - Applies to: All agents
 - Mandatory when:
   - The user wants to initialize the productivity system in Google Drive for the first time
@@ -339,30 +358,6 @@ If multiple skills match a task, apply all applicable skills.
 
 # Libraries
 
-Workspace libraries in `common-libraries/`. Use these instead of custom implementations.
-Each library has a README with usage instructions.
+[Ruya](https://github.com/cilerler/ruya) is the reference library implementation and owns the complete package catalog and package documentation.
 
-| Library | Purpose | README |
-|---------|---------|--------|
-| MyOrganization.OpenTelemetry | OpenTelemetry configuration and instrumentation | [README](common-libraries/MyOrganization.OpenTelemetry/README.md) |
-| MyOrganization.Diagnostics | Diagnostic utilities, distributed tracing helpers | [README](common-libraries/MyOrganization.Diagnostics/README.md) |
-| MyOrganization.Diagnostics.Abstractions | Diagnostic abstractions | [README](common-libraries/MyOrganization.Diagnostics.Abstractions/README.md) |
-| MyOrganization.Services.DistributedLock | Distributed locking with heartbeat support | [README](common-libraries/MyOrganization.Services.DistributedLock/README.md) |
-| MyOrganization.Services.DistributedLock.Abstractions | Distributed lock abstractions | [README](common-libraries/MyOrganization.Services.DistributedLock.Abstractions/README.md) |
-| MyOrganization.Services.DistributedLock.Redis | Redis-based distributed lock implementation | [README](common-libraries/MyOrganization.Services.DistributedLock.Redis/README.md) |
-| MyOrganization.Services.LockManager | Application-level lock management | [README](common-libraries/MyOrganization.Services.LockManager/README.md) |
-| MyOrganization.Services.MessageQueue | Provider-agnostic messaging infrastructure | [README](common-libraries/MyOrganization.Services.MessageQueue/README.md) |
-| MyOrganization.Services.MessageQueue.RabbitMq | RabbitMQ messaging implementation | [README](common-libraries/MyOrganization.Services.MessageQueue.RabbitMq/README.md) |
-| MyOrganization.Services.CloudStorage.Abstractions | Provider-agnostic cloud storage | [README](common-libraries/MyOrganization.Services.CloudStorage.Abstractions/README.md) |
-| MyOrganization.Services.TokenBroker | JWT service-to-service authentication | [README](common-libraries/MyOrganization.Services.TokenBroker/README.md) |
-| MyOrganization.EntityFrameworkCore.SqlServer | EF Core bulk operations via SqlBulkCopy | [README](common-libraries/MyOrganization.EntityFrameworkCore.SqlServer/README.md) |
-| MyOrganization.Extensions.Configuration | Configuration extensions | [README](common-libraries/MyOrganization.Extensions.Configuration/README.md) |
-| MyOrganization.Extensions.DependencyInjection | DI extensions | [README](common-libraries/MyOrganization.Extensions.DependencyInjection/README.md) |
-| MyOrganization.Extensions.Hosting | Hosting extensions | [README](common-libraries/MyOrganization.Extensions.Hosting/README.md) |
-| MyOrganization.AspNetCore.Middleware | ASP.NET Core middleware | [README](common-libraries/MyOrganization.AspNetCore.Middleware/README.md) |
-| MyOrganization.Primitives | Common primitives | [README](common-libraries/MyOrganization.Primitives/README.md) |
-| MyOrganization.Testing.Primitives | Testing utilities | [README](common-libraries/MyOrganization.Testing.Primitives/README.md) |
-| MyOrganization.System.Xml.Serialization | XML serialization utilities | [README](common-libraries/MyOrganization.System.Xml.Serialization/README.md) |
-| MyOrganization.Text.Json | JSON serialization utilities | [README](common-libraries/MyOrganization.Text.Json/README.md) |
-| MyOrganization.Kiota.Client | Kiota HTTP client | [README](common-libraries/MyOrganization.Kiota.Client/README.md) |
-| MyOrganization.OData.Client | OData client | [README](common-libraries/MyOrganization.OData.Client/README.md) |
+A solution may use Ruya or compatible organization-owned libraries, including libraries maintained in a `common-libraries/` workspace. Ruya is not a required dependency.

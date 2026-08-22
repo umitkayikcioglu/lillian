@@ -345,14 +345,14 @@
         <span class="chip pre mb-3">Phase 2 · Justify</span>
         <h3 class="text-2xl font-bold text-slate-900 mt-3 mb-2">Business Case</h3>
         <p class="text-slate-600 leading-relaxed">Scales: light usage = problem + reasons + risks. Heavy usage adds finance. Optional companion: Financial Model with NPV + sensitivity analysis.</p>
-        <div class="mt-4 text-xs text-slate-400 font-mono">/docs/projects/P{N}/BusinessCase.md</div>
+        <div class="mt-4 text-xs text-slate-400">Project-scoped document · resolve its exact path and filename from <code class="font-mono">solution-structure</code></div>
       </div>
       <div class="arrow">→</div>
       <div class="card flex-1">
         <span class="chip pre mb-3">Phase 3 · Take Over</span>
         <h3 class="text-2xl font-bold text-slate-900 mt-3 mb-2">Takeover</h3>
         <p class="text-slate-600 leading-relaxed">When inheriting an existing system. Same template flips to <em>Handover</em> at Phase 9 closure.</p>
-        <div class="mt-4 text-xs text-slate-400 font-mono">/docs/tickets/{ID}/Handoff.md</div>
+        <div class="mt-4 text-xs text-slate-400">Ticket-scoped document · resolve its exact path and filename from <code class="font-mono">solution-structure</code></div>
       </div>
     </div>
   </section>
@@ -470,7 +470,7 @@
       <div class="card" style="border-left: 4px solid #16a34a;">
         <h3 class="text-xl font-bold text-slate-900 mb-1">Architecture Overview</h3>
         <p class="text-slate-500 text-xs uppercase tracking-wider font-bold mb-3">Diátaxis · Explanation</p>
-        <p class="text-slate-600 leading-relaxed text-sm">How the existing system / module / component / area works. Multiple per repo — pick the narrowest scope that captures a useful audience.</p>
+        <p class="text-slate-600 leading-relaxed text-sm">How the existing product / module / component / service / coherent area works. Multiple per repo — pick the narrowest scope that captures a useful audience.</p>
         <div class="mt-3 text-xs text-green-700 font-semibold">Updated when behavior or structure shifts.</div>
       </div>
       <div class="card" style="border-left: 4px solid #16a34a;">
@@ -608,13 +608,13 @@
     </div>
     <div class="reveal flex-1 grid grid-cols-2 gap-4 content-start">
       <div class="card">
-        <div class="text-xs font-bold tracking-widest uppercase text-indigo-600 mb-3">1 · Filename pattern</div>
-        <code class="text-base font-mono text-slate-800 block bg-slate-50 p-3 rounded">{yyyyMMddHHmm}-{slug}.md</code>
-        <p class="text-slate-600 leading-relaxed text-sm mt-3">Living docs (Runbook, Test Cases, Architecture Overview) drop the timestamp — `{slug}.md` only.</p>
+        <div class="text-xs font-bold tracking-widest uppercase text-indigo-600 mb-3">1 · Physical naming authority</div>
+        <code class="text-base font-mono text-slate-800 block bg-slate-50 p-3 rounded">solution-structure</code>
+        <p class="text-slate-600 leading-relaxed text-sm mt-3">Resolve every in-repo scope, directory, filename, and attachment location from its canonical document catalog. Do not derive another naming pattern here.</p>
       </div>
       <div class="card">
         <div class="text-xs font-bold tracking-widest uppercase text-indigo-600 mb-3">2 · Doc ID inside the file</div>
-        <code class="text-base font-mono text-slate-800 block bg-slate-50 p-3 rounded">{ABBR}-yyyyMMddHHmm-slug</code>
+        <code class="text-base font-mono text-slate-800 block bg-slate-50 p-3 rounded">{DocumentTypeAbbreviation}-{yyyyMMddHHmm}-{slug}</code>
         <p class="text-slate-600 leading-relaxed text-sm mt-3">e.g., `ADR-202604261430-adopt-event-sourcing-for-billing`. Lives in `## Metadata`, never in the H1.</p>
       </div>
       <div class="card">
@@ -624,7 +624,7 @@
       </div>
       <div class="card">
         <div class="text-xs font-bold tracking-widest uppercase text-indigo-600 mb-3">4 · Metadata field order</div>
-        <p class="text-slate-700 leading-relaxed text-sm">Identity → Last Updated → Date → Status → Domain fields → Person fields. By <strong>scanning priority</strong>, not alphabetical.</p>
+        <p class="text-slate-700 leading-relaxed text-sm">Identity → Version <em>(rare)</em> → Last Updated → Date → Status → Domain fields → Person fields. By <strong>scanning priority</strong>, not alphabetical.</p>
       </div>
       <div class="card col-span-2" style="background: linear-gradient(135deg, #eef2ff, #e0e7ff); border-color: #c7d2fe;">
         <div class="text-xs font-bold tracking-widest uppercase text-indigo-700 mb-3">5 · DRY · the most-broken rule</div>
@@ -632,7 +632,7 @@
       </div>
     </div>
     <div class="reveal mt-6 text-center">
-      <p class="text-2xl font-light text-slate-700">Templates are the source of truth. <span class="gradient-text font-semibold">SKILL.md is the compass.</span></p>
+      <p class="text-2xl font-light text-slate-700"><code class="font-mono">solution-structure</code> owns placement and names. <span class="gradient-text font-semibold">Templates own document content; SKILL.md owns semantics and workflow.</span></p>
     </div>
   </section>
 

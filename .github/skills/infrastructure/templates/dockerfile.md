@@ -2,6 +2,9 @@
 
 Multi-stage Dockerfile for .NET 10 services.
 
+[`Canonical deployable-runner identities`](../../solution-structure/SKILL.md#canonical-deployable-runner-identities)
+owns the deployable project path and identity. Resolve those before applying this content template.
+
 ## Template
 
 ```dockerfile
@@ -19,7 +22,7 @@ ARG GITHUB_PAT
 ARG VERSION
 
 # Configure NuGet for private packages
-RUN dotnet nuget add source https://nuget.pkg.github.com/myorganization/index.json \
+RUN dotnet nuget add source https://nuget.pkg.github.com/{GitHubPackageOwner}/index.json \
     -n "github" -u "docker" -p "$GITHUB_PAT" --store-password-in-clear-text
 
 WORKDIR /build
@@ -30,17 +33,17 @@ COPY ["Directory.Build.props", "./"]
 COPY ["Directory.Build.targets", "./"]
 COPY ["global.json", "./"]
 
-# Copy project file and restore
-COPY ["src/{ProjectName}/{ProjectName}.csproj", "src/{ProjectName}/"]
-RUN dotnet restore "./src/{ProjectName}/{ProjectName}.csproj" -p:Configuration=Release
+# Copy the deployable project file and restore
+COPY ["src/{DeployableProcessName}/{DeployableProcessName}.csproj", "src/{DeployableProcessName}/"]
+RUN dotnet restore "./src/{DeployableProcessName}/{DeployableProcessName}.csproj" -p:Configuration=Release
 
 # Copy source and build
 COPY . .
-WORKDIR "/build/src/{ProjectName}"
+WORKDIR "/build/src/{DeployableProcessName}"
 
 # Publish stage
 FROM build AS publish
-RUN dotnet publish "./{ProjectName}.csproj" \
+RUN dotnet publish "./{DeployableProcessName}.csproj" \
     -c $BUILD_CONFIGURATION \
     -o /app/publish \
     /p:UseAppHost=false \
@@ -50,14 +53,17 @@ RUN dotnet publish "./{ProjectName}.csproj" \
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "{ProjectName}.dll"]
+ENTRYPOINT ["dotnet", "{DeployableProcessName}.dll"]
 ```
 
 ## Placeholders
 
-| Placeholder | Replace With | Example |
-|-------------|--------------|---------|
-| `{ProjectName}` | Your project name | `MyOrganization.MyService.Host` |
+| Placeholder | Replace With |
+|-------------|--------------|
+| `{DeployableProcessName}` | Full canonical deployable runner identity resolved from `solution-structure`; reuse it as the project stem and do not shorten it to a service or app name |
+| `{GitHubPackageOwner}` | Actual GitHub account or organization that owns the package feed |
+| `{ReferencedProjectDirectory}` | Exact repository-relative directory of one referenced canonical project |
+| `{ReferencedProjectName}` | Full project-file stem for that referenced project |
 
 ## Usage
 
@@ -67,22 +73,26 @@ ENTRYPOINT ["dotnet", "{ProjectName}.dll"]
 docker build \
   --build-arg GITHUB_PAT=$GITHUB_PAT \
   --build-arg VERSION=1.0.0 \
-  -t myservice:1.0.0 \
-  -f src/MyService.Host/Dockerfile \
+  -t "${CONTAINER_IMAGE}:1.0.0" \
+  -f "src/{DeployableProcessName}/Dockerfile" \
   .
 ```
 
 ### Multi-Project Solution
 
-If your service depends on other projects in the solution, ensure all project files are copied before restore:
+If the deployable project references other projects in the solution, copy every referenced project file before
+restore. Resolve each repository-relative project directory and full project name from `solution-structure`
+and the actual project reference; do not infer project types from this example.
 
 ```dockerfile
 # Copy all project files for restore
-COPY ["src/MyService.Host/MyService.Host.csproj", "src/MyService.Host/"]
-COPY ["src/MyService.Core/MyService.Core.csproj", "src/MyService.Core/"]
-COPY ["src/MyService.Infrastructure/MyService.Infrastructure.csproj", "src/MyService.Infrastructure/"]
-RUN dotnet restore "./src/MyService.Host/MyService.Host.csproj" -p:Configuration=Release
+COPY ["src/{DeployableProcessName}/{DeployableProcessName}.csproj", "src/{DeployableProcessName}/"]
+COPY ["{ReferencedProjectDirectory}/{ReferencedProjectName}.csproj", "{ReferencedProjectDirectory}/"]
+RUN dotnet restore "./src/{DeployableProcessName}/{DeployableProcessName}.csproj" -p:Configuration=Release
 ```
+
+Repeat the `{ReferencedProjectDirectory}` / `{ReferencedProjectName}` line once for each referenced project,
+using its resolved canonical repository path and full project file stem.
 
 ## Layer Optimization
 

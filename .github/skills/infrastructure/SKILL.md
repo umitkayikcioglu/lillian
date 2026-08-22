@@ -26,6 +26,12 @@ summary: Docker and Kubernetes patterns for .NET 10 services including health pr
 
 Defines containerization and orchestration standards for .NET services.
 
+Dockerfile and deployable-project placement comes from
+[`Canonical deployable-runner identities`](../solution-structure/SKILL.md#canonical-deployable-runner-identities),
+and Kubernetes placement comes from
+[`Canonical Kubernetes directory structure`](../solution-structure/SKILL.md#canonical-kubernetes-directory-structure).
+This skill owns the contents of Dockerfiles and Kubernetes manifests, not a second repository layout.
+
 ## Roles
 
 - **Developer**: Creates and maintains Dockerfile and Kubernetes manifests
@@ -37,13 +43,17 @@ Defines containerization and orchestration standards for .NET services.
 
 See [templates/dockerfile.md](templates/dockerfile.md) for complete template.
 
+The Dockerfile's `{DeployableProcessName}` is the full canonical deployable runner project name resolved from
+`solution-structure` (for example, the value matching its `{Organization}.{Product}.Host` form). Do not shorten
+it to a service name or invent app/core/infrastructure project identities.
+
 ### Required Structure
 
 1. **Multi-stage build**: base → build → publish → final
 2. **.NET 10 base images**: `mcr.microsoft.com/dotnet/aspnet:10.0` and `sdk:10.0`
 3. **Non-root user**: `USER app`
 4. **Standard ports**: 8080 (HTTP), 8081 (HTTPS)
-5. **Build files**: Copy `Directory.*.props`, `global.json` for proper restore
+5. **Build files**: Copy the four root build files required by `solution-structure`: `Directory.Packages.props`, `Directory.Build.props`, `Directory.Build.targets`, and `global.json`
 
 ### Build Arguments
 
@@ -66,37 +76,43 @@ See [templates/dockerfile.md](templates/dockerfile.md) for complete template.
 
 See [templates/kubernetes.md](templates/kubernetes.md) for complete templates.
 
-### Required Manifests
+### Placement contract
 
-| File | Purpose |
-|------|---------|
-| `base/deployment.yaml` | Pod specification |
-| `base/service.yaml` | Service exposure |
-| `base/kustomization.yaml` | Kustomize configuration |
-| `overlays/{env}/` | Environment-specific patches |
+Use the [canonical Kubernetes directory structure](../solution-structure/SKILL.md#canonical-kubernetes-directory-structure)
+before creating or moving a manifest. It exclusively owns the Kubernetes topology, filenames, and structural
+identity tokens. This skill owns the content and deployment behavior of those structure-selected manifests.
 
-### Kustomize Structure
+### Deployable identity and image tokens
 
-Source of truth: [`solution-structure`](../solution-structure/SKILL.md) § *.NET Solution* — `/tools/Kubernetes/` subtree (full `base/` + `overlays/{integration,testing,staging,production}/{base,default,alternative}/` shape).
+- Resolve `{DeployableProcessName}`, `{DeploymentName}`, `{KubernetesEnvironmentName}`, and
+  `{KubernetesEnvironmentKebabName}` from the
+  [canonical Kubernetes authority](../solution-structure/SKILL.md#canonical-kubernetes-directory-structure).
+- `{DeploymentKebabName}` is the only Kubernetes resource-name rendering. Lowercase the complete
+  `{DeploymentName}`, replace dots and other non-alphanumeric runs with one hyphen, and trim leading/trailing
+  hyphens. If the result exceeds Kubernetes' 63-character label limit, take its first 54 characters, trim any
+  trailing hyphen, then append a hyphen and the first eight lowercase hexadecimal characters of the SHA-256
+  of the unshortened kebab value. Resolve it at scaffold time; committed manifests contain the literal.
+- `app-image:latest` is the deploy-time image placeholder. CI rewrites it with
+  `kustomize edit set image "app-image:latest=<image>:<tag>"` in the selected deployment overlay. CI may set
+  the namespace in that same overlay.
 
-Quick reference:
-```
-tools/Kubernetes/
-├── base/
-│   ├── kustomization.yaml
-│   ├── deployment.yaml
-│   └── service.yaml
-└── overlays/
-    ├── integration/
-    ├── testing/
-    ├── staging/
-    └── production/
-```
+### Conditional manifest content
 
-### Placeholders (two mechanisms — do not mix them up)
-
-- `{APPLICATION_NAME}` — **scaffold-time token.** Replaced with the real service name when the manifests are generated; committed manifests contain the literal name. Nothing substitutes variables at deploy time.
-- `app-image:latest` — **deploy-time image placeholder.** The committed manifests reference this literal image; CI pins the real image via `kustomize edit set image "app-image:latest=<image>:<tag>"` in the `repo/` layer, and sets the namespace via `kustomize edit set namespace`. See the GitHub Actions example in `templates/kubernetes.md`.
+- Keep each base `Deployment` and its `kustomization.yaml` complete and deployable. Add `service.yaml` only
+  when that deployment exposes a stable network Service; a worker-only deployment does not generate one.
+- Add `base/{DeploymentName}/configmap.yaml` only when the deployment has non-secret configuration to mount. Add an overlay ConfigMap
+  patch only when that deployment or environment changes those values. Never create an empty ConfigMap as a
+  structural placeholder.
+- Mount a Secret only when the workload consumes one. Secrets are externally supplied; never commit secret
+  values or put them in a ConfigMap.
+- Configure liveness and readiness probes when the corresponding endpoints exist. Add a startup probe when
+  initialization can delay readiness. A manifest must not probe an endpoint the process does not map.
+- Declare resource requests and limits for deployed workloads. Start from the environment defaults below,
+  then replace them with measured values when profiling supports the change.
+- Use the restricted security context by default. Relax only an incompatible setting, document why, and prefer
+  a writable volume over disabling `readOnlyRootFilesystem` for the whole container.
+- Add private-registry pull secrets, in-pod HTTPS ports, configuration mounts, node selectors, affinity,
+  tolerations, and workload-specific volumes only when the deployment actually requires them.
 
 ---
 
@@ -109,6 +125,10 @@ tools/Kubernetes/
 | Liveness | `/healthz/live` | Process is alive | `live` |
 | Readiness | `/healthz/ready` | Can accept traffic | `ready` |
 | Startup | `/healthz/startup` | Initialization complete | `startup` |
+
+These are the canonical probe paths for new integrations. An existing aggregate or compatibility endpoint may
+remain when current consumers depend on it; it is not a fourth canonical probe. Do not remove, rename, or
+retarget an established alias without an explicit compatibility and consumer-migration decision.
 
 ### Probe Configuration
 
@@ -127,18 +147,21 @@ For health check implementation and registration patterns, see the dotnet-servic
 app.MapHealthChecks("/healthz/live", new HealthCheckOptions
 {
     Predicate = _ => false // Always healthy if process is running
-});
+}).AllowAnonymous();
 
 app.MapHealthChecks("/healthz/ready", new HealthCheckOptions
 {
     Predicate = check => check.Tags.Contains("ready")
-});
+}).AllowAnonymous();
 
 app.MapHealthChecks("/healthz/startup", new HealthCheckOptions
 {
     Predicate = check => check.Tags.Contains("startup")
-});
+}).AllowAnonymous();
 ```
+
+Probe endpoints are anonymous so orchestrators can call them without application credentials. Their responses
+must not expose secrets, dependency connection material, or other sensitive diagnostics.
 
 ---
 
@@ -213,15 +236,17 @@ app.Lifetime.ApplicationStopping.Register(() =>
 
 | Path | Source | Purpose |
 |------|--------|---------|
-| `/app/configuration/secret` | Kubernetes Secret | Sensitive configuration |
-| `/app/configuration/configmap` | ConfigMap | Non-sensitive configuration |
+| `/app/configuration/secret` | Kubernetes Secret | Sensitive configuration, when used |
+| `/app/configuration/configmap` | ConfigMap | Non-sensitive configuration, when used |
 
 ### Configuration Loading
 
 ```csharp
+var environmentName = builder.Environment.EnvironmentName;
+
 builder.Configuration
     .AddJsonFile("appsettings.json", optional: false)
-    .AddJsonFile($"appsettings.{env}.json", optional: true)
+    .AddJsonFile($"appsettings.{environmentName}.json", optional: true)
     .AddJsonFile("/app/configuration/configmap/appsettings.json", optional: true)
     .AddJsonFile("/app/configuration/secret/appsettings.json", optional: true)
     .AddEnvironmentVariables();
@@ -271,7 +296,10 @@ When reviewing infrastructure changes:
 - [ ] Health probes configured with appropriate timing
 - [ ] Resource requests and limits defined
 - [ ] Graceful shutdown period set
-- [ ] Secrets mounted from Kubernetes Secrets (not ConfigMaps)
-- [ ] Image pull secrets configured
-- [ ] Environment-specific overlays for all environments
-- [ ] No hardcoded values (use Kustomize substitution)
+- [ ] Any sensitive configuration is mounted from a Kubernetes Secret, never a ConfigMap
+- [ ] Optional pull secrets, ports, probes, volumes, and ConfigMaps exist only when the workload uses them
+- [ ] Only supported environments and actual complete deployment identities have overlay leaves
+- [ ] The full process and deployment identities were resolved once; DNS-label fields use their canonical kebab renderings
+- [ ] CI pins the image and namespace in the actual selected deployment overlay
+- [ ] The change was exercised locally with the repository's applicable container/orchestration harness; use
+      Docker Compose or Minikube when that is the repository's established local runtime

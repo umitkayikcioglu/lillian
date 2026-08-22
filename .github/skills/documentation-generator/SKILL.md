@@ -40,6 +40,7 @@ triggers:
   - hiring
   - recruiting
 references:
+  - ../solution-structure/SKILL.md
   - templates/architecture-decision-record.md
   - templates/request-for-comments.md
   - templates/design-doc.md
@@ -65,7 +66,36 @@ summary: Document templates for ADRs, RFCs, design docs, runbooks, post incident
 
 # Documentation Skill
 
-Provides standardized templates for all documentation types used in the repository.
+Provides standardized templates for the structured document types listed below. Repository and service
+`README.md` files are structural indexes/overviews rather than instances of these templates; their placement
+and purpose come from `solution-structure` and their content is maintained with the owning repository or
+service.
+
+## Before you write: read the template file
+
+**The section lists in this document are an index, not a substitute for the templates.** Every
+document type below points at a file under `templates/`. Open that file and author from it.
+
+Composing a document from the headings listed in this skill produces something that looks
+conformant and is not. The sections it drops are usually the ones that matter most — Cross-Cutting
+Concerns, Rollback, Verify Completion, Revision History — because those are the sections an author
+does not think to invent. The result reads as complete while silently lacking exactly what a future
+reader needs.
+
+The order:
+
+1. Identify the document type, then resolve its repository path and filename from
+   [`Documentation Placement and Naming Rules`](../solution-structure/SKILL.md#documentation-placement-and-naming-rules).
+2. **Read the selected `templates/[document-type].md` file in full** before writing a line.
+3. Author using that file's headings, in that order.
+4. Include sections you will leave thin. Where one genuinely does not apply, say so in a line —
+   `Not applicable: single-operator system, no rotation` — rather than deleting the heading. An
+   explicit absence is information; a missing heading is indistinguishable from an oversight.
+
+**Existing documents are different.** Do not retrofit template sections into an already-accepted
+ADR or a historical record by inventing content for them. Restructure and rename freely; author
+new prose never. A missing section in an accepted decision is honest, whereas a fabricated
+Assumptions or Risks section corrupts the record.
 
 ## When to Use
 
@@ -84,7 +114,7 @@ Provides standardized templates for all documentation types used in the reposito
 | 8. Report Progress | Project Status Update | Regular reporting to stakeholders | Project Manager | Leadership |
 | 9. Closure | Retrospective | At project end, to capture outcomes and lessons | PM, Team Lead | Leadership, Team |
 | 10. Always-Living Reference | Tech Stack Overview | To document current technologies | Engineer, Tech Lead | New team members |
-| 10. Always-Living Reference | Architecture Overview | To explain how the existing system / module / component works (Diátaxis "Explanation") | Architect, Tech Lead | Dev Team, New team members |
+| 10. Always-Living Reference | Architecture Overview | To explain how the existing product, module, component, service, or coherent area works (Diátaxis "Explanation") | Architect, Tech Lead | Dev Team, New team members |
 | 10. Always-Living Reference | Data Dictionary | To define schema, fields, data types | Data Engineers, DBAs | Data Governance |
 | 10. Always-Living Reference | Business Glossary | To define key business terms | Product, Domain Experts | Product Owners |
 | Orthogonal A. Incident | Post Incident Review (aka Postmortem) | After incidents | On-call Engineer | SRE Lead, Manager |
@@ -92,7 +122,7 @@ Provides standardized templates for all documentation types used in the reposito
 | Orthogonal B. People & Recruiting | Brag Document | Before reviews or promo cycles | Individual | Manager |
 | Orthogonal B. People & Recruiting | Performance Improvement Plan | When performance needs formal guidance | Manager, HR | HR, Department Head |
 
-> **Project intake** is *not* a template here — small ideas live as a **GitHub issue**. If an issue grows into a project, graduate it into `/docs/projects/P{N}/BusinessCase.md` (light usage; financial sections skipped). Add `BusinessCaseFinancialModel.md` only when a financial gate engages.
+> **Project intake** is *not* a template here — small ideas live as a **GitHub issue**. If an issue grows into a project, graduate it into a Business Case (light usage; financial sections skipped). Add a Business Case Financial Model only when a financial gate engages. Resolve both physical names and locations from `solution-structure`.
 
 ## Lifecycle Phases
 
@@ -110,17 +140,18 @@ PHASE                          ARTIFACTS
 4. Decide & Design             RFC → ADR(s) → Design Doc
                                ADRs emerge across all three —
                                and during Implementation
-5. Build Contract              Test Plan (project-level, optional;
-                                 parallel to Design Doc)
-                               Test Cases (per-feature, derived from
+5. Build Contract              Test Plan (optional; scope selected from
+                                 the template; parallel to Design Doc)
+                               Test Cases (living; per-feature, from
                                  acceptance criteria; pre-code)
 6. Implementation              Code gated by Test Cases
-7. Operate                     Runbook (living) + SOP (repeatable)
+7. Operate                     Runbook (living) + SOP (living)
 8. Report Progress             Project Status Update (recurring)
 9. Closure                     Handover (same template as Phase 3,
                                  used outgoing here)
                                Project Retrospective
-10. Always-Living Reference    Tech Stack Overview (updated when an
+10. Always-Living Reference    all four are living
+                               Tech Stack Overview (updated when an
                                  ADR changes a tech choice)
                                Architecture Overview (updated when
                                  system behavior or structure shifts)
@@ -188,75 +219,52 @@ RFCs, ADRs, and Design Docs look similar at a glance but capture different thing
 - **Design Doc with no ADRs for load-bearing choices.** Key technology or architecture picks should be extractable — future readers shouldn't have to re-read the whole DD to find them.
 - **Writing all three for a trivial change.** Overhead is real; pick the smallest artifact set that captures the decision.
 
-## File Placement & Naming
+## Repository Placement and Naming Authority
 
-Templates in this skill produce artifacts that live in a repository. The location, filename, and whether the name is dated or fixed all matter.
+[`Documentation Placement and Naming Rules`](../solution-structure/SKILL.md#documentation-placement-and-naming-rules)
+is the sole source of truth for every in-repo documentation directory, filename, scoped placement, and
+supporting-material location. Read that complete section before creating or moving an artifact. This skill does
+not define parallel app, module, component, service, project, or release filename forms.
 
-### Scope hierarchy
+Choose the narrowest scope that still captures the right audience, then apply the one canonical form from
+`solution-structure`. Scope changes audience and placement context only; it does not create different document
+semantics, metadata, identifiers, or lifecycle rules.
 
-Documentation can live at three scopes:
-
-| Scope | Location | Typical contents |
-|-------|----------|------------------|
-| **App** | `/docs/` | All document types |
-| **Module** | `/Modules/{Module}/Docs/` | ADRs, RFCs, runbooks, test-cases scoped to a single module |
-| **Component** | `/Modules/{Module}/{Component}/Docs/` | ADRs, RFCs, runbooks, test-cases scoped to a single component |
-
-Choose the narrowest scope that still captures the right audience. Module-specific runbooks go under the module; app-wide ones go under `/docs/`. Full repo layout is defined in the [`solution-structure`](../solution-structure/SKILL.md) skill — that skill is the source of truth for folder placement and tree shapes. This skill owns dated-vs-living filename conventions, identifier schemes, and the `attachments/{basename}/` convention, defined below.
-
-### Where each document goes
-
-| Template | Target directory | Filename | Notes |
-|----------|------------------|----------|-------|
-| architecture-decision-record | `/docs/adrs/` (or module/component `Docs/adrs/`) | `{yyyyMMddHHmm}-{slug}.md` | |
-| request-for-comments | `/docs/rfcs/` (or module/component `Docs/rfcs/`) | `{yyyyMMddHHmm}-{slug}.md` | |
-| design-doc | `/docs/designs/` | `{yyyyMMddHHmm}-{slug}.md` | |
-| runbook | `/docs/runbooks/` (or module/component `Docs/runbooks/`) | `{slug}.md` | **No date prefix** — living document |
-| standard-operating-procedure | `/docs/sops/` | `{slug}.md` | **No date prefix** — living document. The file is `{slug}.md`; other docs reference it by the stable ID `SOP-{slug}` — same filename-vs-ID split as dated docs (see Identifier schemes) |
-| post-incident-review | `/docs/pirs/` | `{yyyyMMddHHmm}-{slug}.md` | System-lifetime, incident-driven (not project-bound) |
-| takeover-handover | `/docs/tickets/{TICKET-ID}/` | `Handoff.md` | Fixed name. Note spelling: **Handoff** (noun-form), not Handover (verb). Same template covers both directions — incoming Takeover and outgoing Handover. |
-| data-dictionary | `/docs/` | `data-dictionary.md` | Fixed name, singleton |
-| business-glossary | `/docs/` | `business-glossary.md` | Fixed name, singleton |
-| tech-stack-overview | `/docs/` | `tech-stack-overview.md` | Fixed name, singleton |
-| architecture-overview | `/docs/architectures/` (or module/component `Docs/architectures/`) | `{slug}.md` | **No date prefix** — living document. Multiple allowed per scope, each covering a system / module / component / area. Slug describes what it covers (e.g., `system.md`, `auth-flow.md`, `billing-pricing-engine.md`). |
-| business-case | `/docs/projects/P{N}/` | `BusinessCase.md` | Fixed name |
-| business-case-financial-model | `/docs/projects/P{N}/` | `BusinessCaseFinancialModel.md` | Fixed name |
-| retrospective | `/docs/projects/P{N}/` | `Retrospective.md` | Fixed name |
-| project-status-update | `/docs/projects/P{N}/StatusUpdates/` | `{yyyyMMddHHmm}-{slug}.md` | |
-| test-plan *(project-scoped)* | `/docs/projects/P{N}/` | `TestPlan.md` | Fixed name. Sits alongside `BusinessCase.md`, `Retrospective.md` |
-| test-plan *(app/release-scoped)* | `/docs/test-plans/` | `{yyyyMMddHHmm}-{slug}.md` | Use when scope is a release or initiative not tied to a `P{N}` project |
-| test-cases | `/docs/test-cases/` (or module/component `Docs/test-cases/`) | `{slug}.md` | **No date prefix** — living document |
-| brag-document | — | — | Personal artifact; lives outside the repo |
-| performance-improvement-plan | — | — | HR artifact; lives outside the repo |
-| role-brief | — | — | Lives outside the repo (HR-adjacent intake artifact, not engineering deliverable) |
-
-**Why dated vs living:** the `{yyyyMMddHHmm}-{slug}.md` pattern marks **point-in-time records** — immutable once accepted (ADR) or snapshots of a proposal, design, incident, release test scope, or status at a date. The `{slug}.md` pattern marks **living documents** revised in place as the system evolves (runbooks, SOPs, architecture overviews, test cases). **Singletons** (`README`, glossaries, dictionaries, tech stack) keep fixed names — one per repo.
+Point-in-time records capture a proposal, decision, design, incident, coordinated test scope, or status at a
+specific time. Living documents—such as runbooks, SOPs, architecture overviews, and test cases—are revised in
+place as the system evolves. Singletons remain one-per-repository references. `solution-structure` expresses
+those distinctions in their canonical physical names.
 
 ### Identifier schemes
 
-- **Tickets** use the external tracker identifier, e.g. `GITHUB-{N}` for GitHub issues. Adapt the prefix if another tracker is used.
+- **Tickets** use `{TicketId}`, the complete external tracker identifier defined by `solution-structure`. Preserve its tracker prefix; for GitHub issue 42 the identifier is `GITHUB-42`, never `42` or an invented local alias.
 - **Projects** use a sequential internal ID: `P1`, `P2`, `P3`, ...
-- **Documents** use a timestamp-slug ID: `{ABBR}-{yyyyMMddHHmm}-{slug}` where `ABBR` is the document-type abbreviation (`ADR`, `RFC`, `PIR`, etc.), the timestamp follows .NET DateTime conventions (`yyyy`=year, `MM`=month, `dd`=day, `HH`=24-hour, `mm`=minute), and `slug` is the kebab-case title. The filename omits the abbreviation prefix (folder context supplies it) — file is `{yyyyMMddHHmm}-{slug}.md`, in-document references use the full `{ABBR}-{yyyyMMddHHmm}-{slug}` form.
-- **SOPs** are the one living doc type with an ID of its own: the filename stays `{slug}.md` (the `/docs/sops/` folder supplies the type, same omit-the-prefix rule as dated documents), while cross-references from runbooks, tickets, and other SOPs use the full `SOP-{slug}` form. Living docs have no timestamp, so the slug is the stable handle.
+- **Documents** use a timestamp-slug ID: `{DocumentTypeAbbreviation}-{yyyyMMddHHmm}-{slug}` where
+  `{DocumentTypeAbbreviation}` is the established identifier for the selected document type (`ADR`, `RFC`,
+  `PIR`, etc.), the timestamp follows .NET DateTime conventions (`yyyy`=year, `MM`=month, `dd`=day,
+  `HH`=24-hour, `mm`=minute), and `slug` is the kebab-case title. In-document references use this full ID;
+  resolve its physical name from `solution-structure`.
+- **SOPs** are the one living document type with an ID of its own. Cross-references from runbooks, tickets, and other SOPs use `SOP-{slug}`. Living documents have no timestamp, so the slug is the stable handle; resolve the physical name from `solution-structure`.
 - **ID placement inside a document:** the ID lives in the `## Metadata` block (e.g., `**ADR ID:** ADR-202603121430-adopt-event-sourcing-for-billing`), **not** in the `# H1 title`. The H1 is the human-readable title only — `# Architectural Decision Record: Adopt event sourcing for the billing module` — keeping the ID out of the title prevents repetition and keeps the heading scannable.
 
 ### Codenames vs functional names in prose
 
-Repos commonly use **codenames** as developer shorthand (e.g., a repo is `myreponame` internally; the product is "Customer Insights Platform" externally). Codenames are repo-level conventions for **developers** — product users, support staff, auditors, and onboarding readers don't know what they refer to.
+Repositories commonly use an internal **codename** that differs from the functional product name. Codenames
+are developer-facing technical identifiers; product users, support staff, auditors, and onboarding readers may
+not know what they mean.
 
 **Rule:** in doc *prose*, prefer the **functional / product name**. Reserve the codename for places where it is a technical identifier that cannot be renamed.
 
-| Context | Use | Example |
-|---|---|---|
-| File paths, folder names | **codename** | `Modules/MyRepoName/Domain/...` |
-| Git remotes, branch names, repo URLs | **codename** | `github.com/org/myreponame` |
-| Package / namespace / class names | **codename** | `Company.MyRepoName.Domain` |
-| Configuration keys, env vars | **codename** | `MYREPONAME_API_KEY` |
-| Image / artifact / container names | **codename** | `myreponame-host:1.0.0` |
-| Headings and intro paragraphs | **functional name** | "# Architecture Overview: Customer Insights Platform" |
-| User- or stakeholder-facing prose | **functional name** | "The Customer Insights Platform ingests…" |
-| Business Case, Project Status Update, Retrospective | **functional name** | summaries read by leadership / finance |
-| Architecture Overview, Runbook, SOP | **functional name** in prose; **codename** in commands and paths |
+| Context | Use |
+|---|---|
+| File paths, folder names | **canonical technical name resolved from `solution-structure`** |
+| Git remotes, branch names, repository URLs | **existing technical identifier** |
+| Package, namespace, and class names | **canonical technical name from the owning engineering convention** |
+| Configuration keys, environment variables, image and container names | **existing technical identifier** |
+| Headings and intro paragraphs | **functional product name** |
+| User- or stakeholder-facing prose | **functional product name** |
+| Business Case, Project Status Update, Retrospective | **functional product name**; these are read by leadership and finance |
+| Architecture Overview, Runbook, SOP | **functional name** in prose; the resolved technical name in commands and paths |
 
 **Why:** docs survive past their original audience. The engineer who wrote it knows what the codename refers to; the product manager onboarding two years later does not. Functional names age better and onboard faster, while codenames in technical identifiers stay stable through renames.
 
@@ -311,57 +319,15 @@ Templates that track lifecycle carry a `## Status` section whose `<!-- Choose on
 
 The Post Incident Review extends this with incident-specific statuses (Awaiting Root Cause, Pending Approval, Completed, Follow-up Required, Closed, Obsolete, Reopened) defined in its template.
 
-### Supporting attachments
+### Supporting material
 
-Any non-markdown supporting material for a document — diagrams (`.mermaid`, `.excalidraw`, `.puml`, `.png`), screenshots, spreadsheets, raw data, benchmark output, recordings — lives in a sibling `attachments/` folder next to the document, under a subfolder that matches the document's basename (without `.md`).
+Non-markdown material—diagrams, screenshots, spreadsheets, raw data, benchmark output, and recordings—must
+remain attributable to the document it supports. Resolve its physical location and name from
+`solution-structure`; do not invent a parallel `assets` or CI-style `artifacts` convention.
 
-> The name `attachments/` is deliberately chosen over two tempting alternatives:
-> - **`artifacts/`** — rejected because it collides with CI/CD vocabulary (GitHub Actions artifacts, Azure DevOps Artifacts, Maven/Gradle build artifacts, test artifacts).
-> - **`assets/`** — rejected because in documentation-tooling (MkDocs, Docusaurus, Jekyll, Hugo) the term specifically means *web statics referenced by the rendered output* (images, CSS, JS, fonts). What we store here is broader: source files that produce images (`.mermaid`, `.excalidraw`, `.puml`), spreadsheets, raw data, benchmark JSON, recordings. These are supporting evidence attached to a document, not web assets of a rendered site.
->
-> "Attachment" carries an unambiguous meaning — material attached to a specific document — and matches how people already think about supporting files in email, Jira, GitHub Issues, and Confluence.
-
-**Pattern (dated docs):**
-
-```
-{doc-folder}/
-├── {yyyyMMddHHmm}-{slug}.md
-└── attachments/
-    └── {yyyyMMddHHmm}-{slug}/
-        ├── flow.puml
-        ├── benchmark.json
-        └── screenshot.png
-```
-
-**Examples:**
-
-| Document | Attachments folder |
-|----------|--------------------|
-| `/docs/rfcs/202604240930-new-auth.md` | `/docs/rfcs/attachments/202604240930-new-auth/` |
-| `/docs/adrs/202604240930-queue-choice.md` | `/docs/adrs/attachments/202604240930-queue-choice/` |
-| `/docs/designs/202604241015-billing-flow.md` | `/docs/designs/attachments/202604241015-billing-flow/` |
-| `/docs/sops/oncall-rotation.md` *(living)* | `/docs/sops/attachments/oncall-rotation/` |
-| `/docs/pirs/202604241100-outage.md` | `/docs/pirs/attachments/202604241100-outage/` |
-| `/docs/runbooks/deploy-worker.md` *(living)* | `/docs/runbooks/attachments/deploy-worker/` |
-| `/docs/test-cases/checkout-flow.md` *(living)* | `/docs/test-cases/attachments/checkout-flow/` |
-| `/docs/test-plans/202604241200-q2-release.md` *(release-scoped)* | `/docs/test-plans/attachments/202604241200-q2-release/` |
-| `/docs/tickets/GITHUB-42/Handoff.md` | `/docs/tickets/GITHUB-42/attachments/Handoff/` |
-| `/docs/projects/P3/BusinessCase.md` | `/docs/projects/P3/attachments/BusinessCase/` |
-| `/docs/projects/P3/BusinessCaseFinancialModel.md` | `/docs/projects/P3/attachments/BusinessCaseFinancialModel/` |
-| `/docs/projects/P3/TestPlan.md` *(project-scoped)* | `/docs/projects/P3/attachments/TestPlan/` |
-| `/docs/projects/P3/Retrospective.md` | `/docs/projects/P3/attachments/Retrospective/` |
-| `/docs/projects/P3/StatusUpdates/202604241100-week18.md` | `/docs/projects/P3/StatusUpdates/attachments/202604241100-week18/` |
-| `/Modules/Billing/Docs/rfcs/202604241200-refunds.md` | `/Modules/Billing/Docs/rfcs/attachments/202604241200-refunds/` |
-
-**Rules:**
-- Subfolder name matches the document basename exactly — same timestamp, same slug (or same fixed name for `Handoff`, `BusinessCase`, etc.).
-- The rule is uniform: **every doc type uses its own `attachments/{basename}/` subfolder**, including handovers in `tickets/{TICKET-ID}/` and docs in `projects/P{N}/`. No container-as-bag exception — each doc owns its own attachments so the association stays explicit when a container holds multiple docs.
-- Tickets and projects are always folders — `/docs/tickets/{TICKET-ID}/` and `/docs/projects/P{N}/` exist as directories regardless of how many docs they hold.
-- Link from doc to attachment with a relative path: `![flow](./attachments/202604240930-new-auth/flow.mermaid)`. See *Embedding diagrams in markdown* below for format-specific patterns.
-- Create the subfolder only when there is material to put in it. Empty `attachments/` folders are clutter.
-- **Non-markdown reference folders do not use this convention.** `/specs`, `/diagrams`, and `/notebooks` take no `attachments/` — the files in them *are* the artifacts.
-- **Singletons do not use this convention.** `data-dictionary.md`, `business-glossary.md`, and `tech-stack-overview.md` live at `/docs/` root and have no sibling `attachments/` folder — placing a generic `attachments/` at the docs root pollutes the top level and isn't scoped to any doc type. If a singleton genuinely needs supporting material, embed it inline or promote the doc into its own typed folder first.
-- Commit only sharable supporting files. Personal scratch, raw recordings, or sensitive data belong elsewhere.
+- Link to supporting material with paths relative to the document.
+- Create physical storage only when material exists; empty directories are clutter.
+- Commit only shareable material. Personal scratch, raw recordings, and sensitive data belong elsewhere.
 
 ### Embedding diagrams in markdown
 
@@ -377,23 +343,23 @@ Different diagram formats render differently on GitHub:
 <summary>The Auth Flow Diagram</summary>
 
 > [!TIP]
-> The diagram source is at [`./attachments/202604240930-new-auth/auth-flow.puml`](./attachments/202604240930-new-auth/auth-flow.puml). Render with PlantUML.
+> [Edit the PlantUML source](relative-link-to-plantuml-source) and render it with PlantUML. <!-- link-check-ignore -->
 
-![The Auth Flow Diagram](./attachments/202604240930-new-auth/auth-flow.svg)
+![The Auth Flow Diagram](relative-link-to-rendered-svg)
 </details>
 ````
 
 Why this shape:
 - `<details>` keeps long diagrams collapsed by default so the doc body stays scannable.
 - The `> [!TIP]` callout points contributors to the editable source — the `.svg` is generated, not hand-edited.
-- Both the `.puml` source and the generated `.svg` live side-by-side in `attachments/{basename}/`. Both are committed — the SVG is what GitHub renders, the PUML is what humans edit.
+- Keep the `.puml` source and generated `.svg` together in the supporting-material location selected by `solution-structure`. Commit both: GitHub renders the SVG, while humans edit the PUML.
 
 ### Gotchas
 
-- `takeover-handover.md` template renders to `Handoff.md` — different spelling (noun: the *handoff*). Same template used for both Takeover (incoming) and Handover (outgoing).
-- Runbooks, SOPs, and test-cases are date-less — filenames are `{slug}.md`, not `{yyyyMMddHHmm}-{slug}.md`. They are living documents updated in place as systems / procedures / features change.
-- `data-dictionary`, `business-glossary`, and `tech-stack-overview` are **singletons** at `/docs/` root — not in a subfolder, never dated, one per repo.
-- `architecture-overview` is a **living slug-only doc** like Runbook — multiple allowed per scope, each describing a system / module / component / area. Filename is `{slug}.md` in `/docs/architectures/` (or module/component `Docs/architectures/`). Pick the narrowest scope that captures the right audience.
+- Takeover and Handover use the same template for incoming and outgoing transfer; resolve its physical output name from `solution-structure`.
+- Runbooks, SOPs, and test cases are living documents updated in place as systems, procedures, and features change.
+- Data Dictionary, Business Glossary, and Tech Stack Overview are one-per-repository singletons.
+- Architecture Overview is living documentation. Its physical scope is Repository/Product, Module, Component, or Service as defined by `solution-structure`; its title and slug may cover a coherent area within that scope. Pick the narrowest useful audience.
 - Brag documents and PIPs are personal/HR artifacts. Do not commit them to the repository.
 
 ## Templates
@@ -408,7 +374,7 @@ Templates below are ordered by lifecycle phase, matching the Lifecycle Phases se
 Use to secure support, funding, or prioritization. **Scales to project size:**
 - **Light usage** *(Project Brief equivalent)*: Executive Summary, Reasons, Business Options, Timescale, Major Risks. Skip the financial sections. Use when approval gates on capacity/strategy, not budget.
 - **Heavy usage**: Fill all sections including Costs, Dis-benefits, Investment Appraisal. Use for funding/capital allocation decisions.
-- **With dedicated Financial Model**: Keep financial sections high-level here and produce `BusinessCaseFinancialModel.md` alongside.
+- **With dedicated Financial Model**: Keep financial sections high-level here and produce a Business Case Financial Model alongside it.
 
 ---
 
@@ -465,7 +431,7 @@ Use for cross-feature, release, or project-level test strategy.
 **When to use:** opt-in, *not* per-feature.
 
 - Multi-feature releases needing a coordinated test approach (shared environments, integration strategy, performance/load plans).
-- Project-level work — sits in `/docs/projects/P{N}/TestPlan.md` next to `BusinessCase.md` and `Retrospective.md`.
+- Project-level work requiring a coordinated strategy across multiple features or deliverables.
 - Regulated contexts (FDA, IEC 62304, ISO 13485, ISO 26262) where a Test Plan is a *required* deliverable.
 - Non-functional test strategy (performance, security, accessibility, chaos) that doesn't fit cleanly under any single feature's Test Cases.
 
@@ -562,13 +528,14 @@ Use to document current technologies.
 #### Architecture Overview
 **Template:** [templates/architecture-overview.md](templates/architecture-overview.md)
 
-Use to explain how an existing system, module, component, or area works — the Diátaxis *Explanation* quadrant. Describes behavior and structure as they are today; defers the *why* to ADRs, *what tools* to Tech Stack Overview, and *fields* to Data Dictionary.
+Use to explain how an existing product, module, component, service, or coherent area works — the Diátaxis *Explanation* quadrant. Describes behavior and structure as they are today; defers the *why* to ADRs, *what tools* to Tech Stack Overview, and *fields* to Data Dictionary.
 
-**Scope is flexible.** A repo can have many architecture overviews, each covering a different scope:
-- `system.md` — the whole app
-- `auth-flow.md` — a coherent sub-system within a module
-- `billing-pricing-engine.md` — a specific area of complexity
-- `Modules/Billing/Docs/architectures/refunds-pipeline.md` — module-scoped area
+**Coverage is flexible; physical placement is not.** Select one Repository/Product, Module, Component, or Service scope from `solution-structure`, then describe the whole scope or a coherent area within it:
+- Whole system — the complete app
+- One service — its responsibilities, collaborators, and runtime behavior
+- Auth flow — a coherent subsystem within a module
+- Billing pricing engine — a specific area of complexity
+- Refunds pipeline — a module-scoped area
 
 Pick the narrowest scope that captures a useful audience. Don't try to put everything in one doc.
 

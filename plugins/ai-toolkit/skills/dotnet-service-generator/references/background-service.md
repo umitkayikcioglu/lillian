@@ -1,58 +1,40 @@
 # Background Service Pattern
 
-Extends `WorkerBackgroundService<TSettings>` for scheduled/continuous background work.
+Extends `WorkerBackgroundService<TSettings>` for discrete scheduled or polling executions. A long-lived broker subscription is event-driven rather than continuous polling; use the [`IMessageQueueFactory` subscriber pattern](dependencies.md#imessagequeuefactory) instead.
 
 ## File Structure
 
-```
-Services/{ServiceName}/
-├── Abstractions/                    # Public contract
-│   ├── Events/
-│   ├── Interfaces/
-│   ├── Models/
-│   ├── Requests/
-│   └── Responses/
-├── Api/                             # optional — if HTTP endpoints exposed
-├── Clients/                         # External HTTP dependencies
-├── Configuration/
-│   └── {ServiceName}Settings.cs     # Extends WorkerBackgroundServiceSettings
-├── Contracts/                       # Internal interfaces
-│   └── I{ServiceName}.cs
-├── Exceptions/
-├── Extensions/
-│   └── StartupExtensions.cs
-├── Internals/                       # Internal helpers
-├── Mappers/
-├── Models/                          # Internal entities/DTOs
-├── Observability/
-│   └── Grafana/
-│       └── dashboard.json
-├── Resources/                       # optional — embedded resource files (SQL, templates, etc.)
-│   └── SQL/
-├── Validators/
-├── Constants.cs
-├── {ServiceName}Service.cs          # Core business logic
-├── {ServiceName}Worker.cs           # Extends WorkerBackgroundService<{ServiceName}Settings>
-└── {ServiceName}HealthCheck.cs
-```
+Use the canonical service layout from [`solution-structure`](../../solution-structure/SKILL.md#net-solution-folder-structure). This pattern fills the optional scheduled-worker files:
+
+- `Configuration/{ServiceName}Settings.cs` extends `WorkerBackgroundServiceSettings`.
+- `{ServiceName}Worker.cs` extends `WorkerBackgroundService<{ServiceName}Settings>`.
+- `{ServiceName}HealthCheck.cs` is added only when the worker needs service-specific health monitoring.
+
+Do not add an `{EventName}Subscriber.cs` for scheduled or polling work; that file is reserved for a long-lived broker subscription.
 
 ## Features
 
 | Feature | Behavior |
 |---------|----------|
-| Schedule | Cron, continuous, or one-shot |
+| Schedule | Six-field Cronos expression (including seconds), continuous polling, or one-shot |
 | Idle Backoff | Configurable delay when `IdleCycle = true` (no data), `TimeSpan.Zero` = disabled |
 | Delay Between Executions | Fixed delay between consecutive executions, `TimeSpan.Zero` = disabled |
 | Health | `IHealthCheck` - unhealthy if degraded or no completion in X time |
-| Retry | Optional, exponential + jitter, configurable count (default 3) |
-| Concurrency | Skips if previous run still executing |
-| Startup | Fail fast - validates injected `IHealthCheck[]` before first execution |
-| Shutdown | Graceful with configurable timeout for K8s |
+| Retry | Optional for explicitly transient failures only; bounded exponential backoff + jitter, configurable count (default 3) |
+| Fatal/exhausted failure | Records failure, requests application stop, and rethrows; never leaves a silently faulted loop |
+| Execution ordering | Runs sequentially within each worker instance; the next delay or schedule is evaluated after the current execution completes |
+| Startup | Fail fast - executes only `HealthCheckService` registrations tagged `startup` before first execution |
+| Shutdown | Graceful within a configurable application timeout |
 | Observability | Base provides protected meter/tracer, derived adds service-specific metrics |
 
-> **Warning -- Continuous mode**: When `ScheduleCronExpression` is null/empty (continuous mode), the loop has no built-in delay between iterations. Always set `DelayBetweenExecutions` to a non-zero value (e.g., `"00:00:01"`) to prevent tight-loop CPU spinning.
+> **Warning -- Continuous mode**: When `ScheduleCronExpression` is null/empty, a zero
+> `DelayBetweenExecutions` permits immediate non-idle iterations. Set a non-zero value (for example,
+> `"00:00:01"`) unless a measured use case explicitly requires a tight loop. Idle cycles use
+> `IdleBackoffDuration` when configured.
 
 ## Required Extensions
+
+[Ruya.Extensions.Hosting](https://github.com/cilerler/ruya/blob/main/src/Ruya.Extensions.Hosting/README.md) is the reference implementation of the shared contracts below. A compatible organization-owned library may provide the same contracts under its own namespace.
 
 ### ScheduleValidationAttribute.cs
 
@@ -60,7 +42,8 @@ Services/{ServiceName}/
 using System;
 using System.ComponentModel.DataAnnotations;
 using Cronos;
-namespace MyOrganization.Extensions.Hosting.Validators;
+
+namespace Ruya.Extensions.Hosting.Validators;
 
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
 public sealed class ScheduleValidationAttribute : ValidationAttribute
@@ -83,7 +66,7 @@ public sealed class ScheduleValidationAttribute : ValidationAttribute
             CronExpression.Parse(expression, CronFormat.IncludeSeconds);
             return ValidationResult.Success;
         }
-        catch
+        catch (CronFormatException)
         {
             return new ValidationResult(ErrorMessage ?? "Invalid cron expression.");
         }
@@ -95,12 +78,13 @@ public sealed class ScheduleValidationAttribute : ValidationAttribute
 
 ```csharp
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using System.Threading;
 using Cronos;
-using MyOrganization.Extensions.Hosting.Validators;
+using Ruya.Extensions.Hosting.Validators;
 
-namespace MyOrganization.Extensions.Hosting;
+namespace Ruya.Extensions.Hosting;
 
 public class WorkerBackgroundServiceSettings
 {
@@ -117,11 +101,21 @@ public class WorkerBackgroundServiceSettings
 
     // Retry settings
     public bool RetryEnabled { get; set; } = false;
+
+    [Range(0, 100)]
     public int RetryCount { get; set; } = 3;
+
+    [Range(1, 3600)]
     public int RetryBaseDelaySeconds { get; set; } = 1;
 
+    [Range(1, 3600)]
+    public int RetryMaxDelaySeconds { get; set; } = 30;
+
     // Health settings
+    [Range(1, 1000)]
     public int HealthSampleSize { get; set; } = 5;
+
+    [Range(1.0, 100.0)]
     public double HealthDegradedThresholdMultiplier { get; set; } = 2.0;
     public TimeSpan? HealthHardTimeout { get; set; }
 
@@ -155,11 +149,49 @@ public class WorkerBackgroundServiceSettings
 ## WorkerBackgroundService Base Class
 
 ```csharp
-namespace MyOrganization.Extensions.Hosting;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
+using System.Linq;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Ruya.Diagnostics.DistributedTracing;
+using Ruya.Primitives;
+
+namespace Ruya.Extensions.Hosting;
 
 public abstract class WorkerBackgroundService<TSettings> : IHostedLifecycleService, IDisposable
     where TSettings : WorkerBackgroundServiceSettings
 {
+    private static readonly EventId StartupValidationSkipped = new(1000, nameof(StartupValidationSkipped));
+    private static readonly EventId StartupValidationStarting = new(1001, nameof(StartupValidationStarting));
+    private static readonly EventId StartupValidationCompleted = new(1002, nameof(StartupValidationCompleted));
+    private static readonly EventId ServiceDisabled = new(1003, nameof(ServiceDisabled));
+    private static readonly EventId ShutdownStarting = new(1004, nameof(ShutdownStarting));
+    private static readonly EventId ShutdownCompleted = new(1005, nameof(ShutdownCompleted));
+    private static readonly EventId ShutdownHostCancelled = new(1006, nameof(ShutdownHostCancelled));
+    private static readonly EventId ShutdownTimedOut = new(1007, nameof(ShutdownTimedOut));
+    private static readonly EventId ShutdownCancelled = new(1008, nameof(ShutdownCancelled));
+    private static readonly EventId ShutdownFailed = new(1009, nameof(ShutdownFailed));
+    private static readonly EventId ServiceStopped = new(1010, nameof(ServiceStopped));
+    private static readonly EventId ExecutionModeSelected = new(1011, nameof(ExecutionModeSelected));
+    private static readonly EventId InitialExecutionSkipped = new(1012, nameof(InitialExecutionSkipped));
+    private static readonly EventId RunOnceCompleted = new(1013, nameof(RunOnceCompleted));
+    private static readonly EventId LoopDelayStarting = new(1014, nameof(LoopDelayStarting));
+    private static readonly EventId ScheduleCompleted = new(1015, nameof(ScheduleCompleted));
+    private static readonly EventId ScheduleDelayStarting = new(1016, nameof(ScheduleDelayStarting));
+    private static readonly EventId ExecutionStarting = new(1017, nameof(ExecutionStarting));
+    private static readonly EventId ExecutionCompleted = new(1018, nameof(ExecutionCompleted));
+    private static readonly EventId ExecutionCancelled = new(1019, nameof(ExecutionCancelled));
+    private static readonly EventId ExecutionFailed = new(1020, nameof(ExecutionFailed));
+    private static readonly EventId ExecutionRetrying = new(1021, nameof(ExecutionRetrying));
+
 #pragma warning disable IDE1006
     protected readonly ILogger _logger;
     protected readonly IDistributedTracing _tracer;
@@ -167,22 +199,21 @@ public abstract class WorkerBackgroundService<TSettings> : IHostedLifecycleServi
     protected readonly TSettings _settings;
 #pragma warning restore IDE1006
 
-    private readonly IEnumerable<IHealthCheck> _healthChecks;
+    private readonly HealthCheckService _healthCheckService;
+    private readonly IHostApplicationLifetime _hostApplicationLifetime;
     private readonly CancellationTokenSource _cancellationTokenSource = new();
-    private readonly SemaphoreSlim _executionLock = new(1, 1);
     private readonly object _statisticsLock = new ();
 
     // Health tracking (thread-safe via _statisticsLock)
     private readonly Queue<double> _executionDurations = new();
     private double _lastExecutionDuration;
-    private DateTime _lastSuccessfulCompletion = DateTime.UtcNow;
+    private DateTimeOffset _lastSuccessfulCompletion = DateTimeOffset.UtcNow;
 
     // Metrics
     private readonly UpDownCounter<int> _activeExecutions;
     private readonly Counter<long> _executionTotal;
     private readonly Counter<long> _executionSuccess;
     private readonly Counter<long> _executionFailed;
-    private readonly Counter<long> _executionSkipped;
     private readonly Counter<long> _retryTotal;
     private readonly Histogram<double> _executionDuration;
 
@@ -193,7 +224,8 @@ public abstract class WorkerBackgroundService<TSettings> : IHostedLifecycleServi
         IDistributedTracing distributedTracing,
         IMeterFactory meterFactory,
         IOptions<TSettings> options,
-        IEnumerable<IHealthCheck> healthChecks)
+        HealthCheckService healthCheckService,
+        IHostApplicationLifetime hostApplicationLifetime)
     {
         _logger = logger;
         _tracer = distributedTracing;
@@ -207,7 +239,8 @@ public abstract class WorkerBackgroundService<TSettings> : IHostedLifecycleServi
             }
         });
         _settings = options.Value;
-        _healthChecks = healthChecks;
+        _healthCheckService = healthCheckService;
+        _hostApplicationLifetime = hostApplicationLifetime;
 
         var serviceName = JsonNamingPolicy.SnakeCaseLower.ConvertName(GetType().Name);
         _activeExecutions = _meter.CreateUpDownCounter<int>(
@@ -218,8 +251,6 @@ public abstract class WorkerBackgroundService<TSettings> : IHostedLifecycleServi
             $"app_{serviceName}_success", "executions", "Successful executions");
         _executionFailed = _meter.CreateCounter<long>(
             $"app_{serviceName}_failed", "executions", "Failed executions");
-        _executionSkipped = _meter.CreateCounter<long>(
-            $"app_{serviceName}_skipped", "executions", "Skipped (previous still running)");
         _retryTotal = _meter.CreateCounter<long>(
             $"app_{serviceName}_retries", "retries", "Total retry attempts");
         _executionDuration = _meter.CreateHistogram<double>(
@@ -230,29 +261,46 @@ public abstract class WorkerBackgroundService<TSettings> : IHostedLifecycleServi
 
     public abstract Task DoWorkAsync(CancellationToken cancellationToken);
 
+    protected abstract bool IsTransient(Exception exception);
+
     #region IHostedLifecycleService
 
     public async Task StartingAsync(CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Service starting. Validating dependencies.");
-
-        foreach (var check in _healthChecks)
+        if (!_settings.Enabled)
         {
-            var result = await check.CheckHealthAsync(new HealthCheckContext(), cancellationToken);
-            if (result.Status == HealthStatus.Unhealthy)
-            {
-                throw new InvalidOperationException($"Startup health check failed: {result.Description}");
-            }
+            _logger.LogDebug(
+                StartupValidationSkipped,
+                "Service {ServiceName} is disabled. Skipping startup validation.",
+                GetType().Name);
+            return;
         }
 
-        _logger.LogDebug("All health checks passed.");
+        _logger.LogDebug(StartupValidationStarting, "Service starting. Validating dependencies.");
+
+        var result = await _healthCheckService.CheckHealthAsync(
+            registration => registration.Tags.Contains("startup", StringComparer.Ordinal),
+            cancellationToken);
+
+        if (result.Status != HealthStatus.Healthy)
+        {
+            var failedChecks = string.Join(
+                ", ",
+                result.Entries
+                    .Where(entry => entry.Value.Status != HealthStatus.Healthy)
+                    .Select(entry => $"{entry.Key}={entry.Value.Status}"));
+            throw new InvalidOperationException(
+                $"Startup dependency health checks failed: {failedChecks}.");
+        }
+
+        _logger.LogDebug(StartupValidationCompleted, "All startup dependency health checks passed.");
     }
 
     public Task StartedAsync(CancellationToken cancellationToken)
     {
         if (!_settings.Enabled)
         {
-            _logger.LogInformation("Service {ServiceName} is disabled.", GetType().Name);
+            _logger.LogInformation(ServiceDisabled, "Service {ServiceName} is disabled.", GetType().Name);
             return Task.CompletedTask;
         }
 
@@ -262,45 +310,50 @@ public abstract class WorkerBackgroundService<TSettings> : IHostedLifecycleServi
 
     public async Task StoppingAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("SIGTERM received. Initiating graceful shutdown.");
+        _logger.LogInformation(ShutdownStarting, "Host shutdown requested. Initiating graceful shutdown.");
         await _cancellationTokenSource.CancelAsync();
 
-        if (_executingTask is null)
+        var executingTask = _executingTask;
+        if (executingTask is null)
         {
             return;
         }
 
-        using var timeoutCts = new CancellationTokenSource(_settings.ShutdownTimeout);
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(_settings.ShutdownTimeout);
 
         try
         {
-            var completedTask = await Task.WhenAny(_executingTask, Task.Delay(_settings.ShutdownTimeout, CancellationToken.None));
-
-            if (completedTask == _executingTask)
-            {
-                await _executingTask; // Propagate exceptions if any
-                _logger.LogInformation("Work completed gracefully.");
-            }
-            else
-            {
-                _logger.LogWarning(
-                    "Shutdown timeout ({ShutdownTimeout}) exceeded. Work may be incomplete.",
-                    _settings.ShutdownTimeout);
-            }
+            await executingTask.WaitAsync(timeoutCts.Token);
+            _logger.LogInformation(ShutdownCompleted, "Work completed gracefully.");
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (!executingTask.IsCompleted && cancellationToken.IsCancellationRequested)
         {
-            _logger.LogInformation("Shutdown completed via cancellation.");
+            _logger.LogWarning(
+                ShutdownHostCancelled,
+                "Host shutdown cancellation was requested before work completed.");
+        }
+        catch (OperationCanceledException) when (!executingTask.IsCompleted && timeoutCts.IsCancellationRequested)
+        {
+            _logger.LogWarning(
+                ShutdownTimedOut,
+                "Shutdown timeout ({ShutdownTimeout}) exceeded. Work may be incomplete.",
+                _settings.ShutdownTimeout);
+        }
+        catch (OperationCanceledException) when (executingTask.IsCanceled)
+        {
+            _logger.LogInformation(ShutdownCancelled, "Shutdown completed via cancellation.");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during shutdown.");
+            _logger.LogError(ShutdownFailed, ex, "Error during shutdown.");
+            throw;
         }
     }
 
     public Task StoppedAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Service stopped.");
+        _logger.LogInformation(ServiceStopped, "Service stopped.");
         return Task.CompletedTask;
     }
 
@@ -317,12 +370,12 @@ public abstract class WorkerBackgroundService<TSettings> : IHostedLifecycleServi
         await Task.Yield();
         
         var mode = _settings.RunContinuously ? "continuous" : $"schedule: {_settings.ScheduleCronExpression}";
-        _logger.LogInformation("Service running in {Mode} mode.", mode);
+        _logger.LogInformation(ExecutionModeSelected, "Service running in {Mode} mode.", mode);
 
         var isFirstExecution = true;
         while (!cancellationToken.IsCancellationRequested)
         {
-            var shouldExecute = !isFirstExecution || _settings.RunImmediately || _settings.RunContinuously;
+            var shouldExecute = _settings.RunOnce || !isFirstExecution || _settings.RunImmediately || _settings.RunContinuously;
             if (shouldExecute)
             {
                 IdleCycle = false;
@@ -330,55 +383,63 @@ public abstract class WorkerBackgroundService<TSettings> : IHostedLifecycleServi
             }
             else
             {
-                _logger.LogInformation("Skipping initial execution (RunImmediately=false).");
+                _logger.LogInformation(
+                    InitialExecutionSkipped,
+                    "Skipping initial execution (RunImmediately=false).");
             }
 
             isFirstExecution = false;
 
             if (cancellationToken.IsCancellationRequested) break;
 
-            // Apply idle backoff if no data was found
-            if (IdleCycle && _settings.IdleBackoffDuration > TimeSpan.Zero)
+            if (_settings.RunOnce)
             {
-                _logger.LogDebug("Idle cycle detected. Backing off for {Duration}.", _settings.IdleBackoffDuration);
-                try
+                _logger.LogInformation(
+                    RunOnceCompleted,
+                    "Run-once execution completed. No further executions scheduled.");
+                break;
+            }
+
+            if (_settings.RunContinuously)
+            {
+                var loopDelay = IdleCycle && _settings.IdleBackoffDuration > TimeSpan.Zero
+                    ? _settings.IdleBackoffDuration
+                    : _settings.DelayBetweenExecutions;
+
+                if (loopDelay > TimeSpan.Zero)
                 {
-                    await Task.Delay(_settings.IdleBackoffDuration, cancellationToken);
+                    _logger.LogDebug(
+                        LoopDelayStarting,
+                        IdleCycle
+                            ? "Idle cycle detected. Backing off for {Duration}."
+                            : "Waiting {Duration} before next execution.",
+                        loopDelay);
+                    try
+                    {
+                        await Task.Delay(loopDelay, cancellationToken);
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        break;
+                    }
                 }
-                catch (TaskCanceledException)
-                {
-                    break;
-                }
+
+                continue;
             }
 
             if (cancellationToken.IsCancellationRequested) break;
 
-            // Apply artificial delay between executions if configured
-            if (_settings.DelayBetweenExecutions > TimeSpan.Zero)
-            {
-                _logger.LogDebug("Waiting {Delay} before next execution.", _settings.DelayBetweenExecutions);
-                try
-                {
-                    await Task.Delay(_settings.DelayBetweenExecutions, cancellationToken);
-                }
-                catch (TaskCanceledException)
-                {
-                    break;
-                }
-            }
-
-            if (cancellationToken.IsCancellationRequested) break;
-
+            // Cron owns the scheduled delay. DelayBetweenExecutions applies only to continuous polling.
             var delay = _settings.NextOccurrence;
             if (delay == Timeout.InfiniteTimeSpan)
             {
-                _logger.LogInformation("No further executions scheduled.");
+                _logger.LogInformation(ScheduleCompleted, "No further executions scheduled.");
                 break;
             }
 
             if (delay > TimeSpan.Zero)
             {
-                _logger.LogInformation("Next execution in {Delay}.", delay);
+                _logger.LogInformation(ScheduleDelayStarting, "Next execution in {Delay}.", delay);
                 try
                 {
                     await Task.Delay(delay, cancellationToken);
@@ -393,13 +454,6 @@ public abstract class WorkerBackgroundService<TSettings> : IHostedLifecycleServi
 
     private async Task ExecuteWorkAsync(CancellationToken cancellationToken)
     {
-        if (!await _executionLock.WaitAsync(0, cancellationToken))
-        {
-            _logger.LogWarning("Skipping execution - previous run still in progress.");
-            _executionSkipped.Add(1);
-            return;
-        }
-
         var stopwatch = Stopwatch.StartNew();
         _activeExecutions.Add(1);
         _executionTotal.Add(1);
@@ -408,29 +462,33 @@ public abstract class WorkerBackgroundService<TSettings> : IHostedLifecycleServi
         {
             using (_logger.BeginScope("{ExecutionId}", Guid.NewGuid()))
             {
-                _logger.LogDebug("Starting execution.");
+                _logger.LogDebug(ExecutionStarting, "Starting execution.");
 
                 await ExecuteWithRetryAsync(cancellationToken);
 
                 stopwatch.Stop();
                 RecordSuccess(stopwatch.Elapsed.TotalSeconds);
-                _logger.LogDebug("Execution completed in {Duration:F2}s.", stopwatch.Elapsed.TotalSeconds);
+                _logger.LogDebug(
+                    ExecutionCompleted,
+                    "Execution completed in {Duration:F2}s.",
+                    stopwatch.Elapsed.TotalSeconds);
             }
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            _logger.LogInformation("Execution cancelled.");
+            _logger.LogInformation(ExecutionCancelled, "Execution cancelled.");
         }
         catch (Exception ex)
         {
             stopwatch.Stop();
             RecordFailure(stopwatch.Elapsed.TotalSeconds);
-            _logger.LogError(ex, "Execution failed after retries.");
+            _logger.LogError(ExecutionFailed, ex, "Execution failed after retries.");
+            _hostApplicationLifetime.StopApplication();
+            throw;
         }
         finally
         {
             _activeExecutions.Add(-1);
-            _executionLock.Release();
         }
     }
 
@@ -445,15 +503,16 @@ public abstract class WorkerBackgroundService<TSettings> : IHostedLifecycleServi
                 await DoWorkAsync(cancellationToken);
                 return;
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
                 throw;
             }
-            catch (Exception ex) when (attempt < maxAttempts)
+            catch (Exception ex) when (attempt < maxAttempts && IsTransient(ex))
             {
                 _retryTotal.Add(1);
                 var delay = CalculateBackoffWithJitter(attempt);
                 _logger.LogWarning(
+                    ExecutionRetrying,
                     ex,
                     "Attempt {Attempt}/{Max} failed. Retrying in {DelayMs}ms.",
                     attempt,
@@ -467,9 +526,11 @@ public abstract class WorkerBackgroundService<TSettings> : IHostedLifecycleServi
     private TimeSpan CalculateBackoffWithJitter(int attempt)
     {
         const double JitterFactor = 0.5;
-        var baseDelay = _settings.RetryBaseDelaySeconds * Math.Pow(2, attempt - 1);
-        var jitter = Random.Shared.NextDouble() * JitterFactor * baseDelay;
-        return TimeSpan.FromSeconds(baseDelay + jitter);
+        var exponentialDelay = _settings.RetryBaseDelaySeconds * Math.Pow(2, attempt - 1);
+        var cappedDelay = Math.Min(_settings.RetryMaxDelaySeconds, exponentialDelay);
+        var jitterCapacity = _settings.RetryMaxDelaySeconds - cappedDelay;
+        var jitter = Random.Shared.NextDouble() * Math.Min(jitterCapacity, JitterFactor * cappedDelay);
+        return TimeSpan.FromSeconds(cappedDelay + jitter);
     }
 
     #endregion
@@ -489,7 +550,7 @@ public abstract class WorkerBackgroundService<TSettings> : IHostedLifecycleServi
             {
                 _executionDurations.Dequeue();
             }
-            _lastSuccessfulCompletion = DateTime.UtcNow;
+            _lastSuccessfulCompletion = DateTimeOffset.UtcNow;
         }
     }
 
@@ -520,7 +581,7 @@ public abstract class WorkerBackgroundService<TSettings> : IHostedLifecycleServi
         }
     }
 
-    public DateTime GetLastSuccessfulCompletion()
+    public DateTimeOffset GetLastSuccessfulCompletion()
     {
         lock (_statisticsLock)
         {
@@ -533,17 +594,18 @@ public abstract class WorkerBackgroundService<TSettings> : IHostedLifecycleServi
     public void Dispose()
     {
         _cancellationTokenSource.Dispose();
-        _executionLock.Dispose();
 		_meter.Dispose();
         GC.SuppressFinalize(this);
     }
 }
 ```
 
-## Settings.cs
+## Configuration/{ServiceName}Settings.cs
 
 ```csharp
-namespace {Organization}.{Product}.Services.{ServiceName}.Configuration;
+namespace {ServiceNamespace}.Configuration;
+
+using Ruya.Extensions.Hosting;
 
 public class {ServiceName}Settings : WorkerBackgroundServiceSettings
 {
@@ -554,10 +616,17 @@ public class {ServiceName}Settings : WorkerBackgroundServiceSettings
 }
 ```
 
-## HealthCheck.cs
+## {ServiceName}HealthCheck.cs
 
 ```csharp
-namespace {Organization}.{Product}.Services.{ServiceName};
+namespace {ServiceNamespace};
+
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Options;
+using {ServiceNamespace}.Configuration;
 
 public class {ServiceName}HealthCheck : IHealthCheck
 {
@@ -574,10 +643,15 @@ public class {ServiceName}HealthCheck : IHealthCheck
         HealthCheckContext context,
         CancellationToken cancellationToken = default)
     {
+        if (!_settings.Enabled)
+        {
+            return Task.FromResult(HealthCheckResult.Healthy("Service is disabled."));
+        }
+
         // Hard timeout check - no successful completion in X time
         if (_settings.HealthHardTimeout.HasValue)
         {
-            var timeSinceLastSuccess = DateTime.UtcNow - _worker.GetLastSuccessfulCompletion();
+            var timeSinceLastSuccess = DateTimeOffset.UtcNow - _worker.GetLastSuccessfulCompletion();
             if (timeSinceLastSuccess > _settings.HealthHardTimeout.Value)
             {
                 return Task.FromResult(HealthCheckResult.Unhealthy(
@@ -604,19 +678,45 @@ public class {ServiceName}HealthCheck : IHealthCheck
 }
 ```
 
-## Worker.cs and Service.cs
+## {ServiceName}Worker.cs and {ServiceName}Service.cs
 
-> **Separation of concerns**: Worker handles scheduling, retries, concurrency, and health. Service handles business logic. This makes business logic testable without standing up a hosted service, and lets you swap the trigger (cron, queue, HTTP) without touching business logic.
+> **Separation of concerns**: Worker handles scheduling, retries, sequential execution, and health. Service handles business logic. This makes business logic testable without standing up a hosted service, and lets you swap the trigger (cron, queue, HTTP) without touching business logic.
+
+When the scheduled/polling capability is selected, replace the neutral `I{ServiceName}.DoWorkAsync` placeholder with these operations:
+
+```csharp
+Task<bool> ProcessAsync(CancellationToken cancellationToken);
+```
+
+Return `true` when an execution performed work and `false` when a polling cycle found nothing; the worker uses that result to apply idle backoff without a separate check-then-process race.
+
+Add the business metric used by the example to `Constants.Metrics`:
+
+```csharp
+public const string ItemsProcessed = "app_{ServiceSnakeName}_items_processed";
+```
 
 ### {ServiceName}Service.cs
 
 ```csharp
-namespace {Organization}.{Product}.Services.{ServiceName};
+namespace {ServiceNamespace};
 
-using {Organization}.{Product}.Services.{ServiceName}.Contracts;
+using System;
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Diagnostics.Metrics;
+using Microsoft.Extensions.Logging;
+using Ruya.Diagnostics.DistributedTracing;
+using Ruya.Primitives;
+using {ServiceContractNamespace};
 
 public class {ServiceName}Service : I{ServiceName}
 {
+    private static readonly EventId BatchCompleted = new(2000, nameof(BatchCompleted));
+    private static readonly EventId BatchFailed = new(2001, nameof(BatchFailed));
+
     private readonly ILogger<{ServiceName}Service> _logger;
     private readonly IDistributedTracing _tracer;
     private readonly Meter _meter;
@@ -643,42 +743,30 @@ public class {ServiceName}Service : I{ServiceName}
             Constants.Metrics.ItemsProcessed, "items", "Items processed");
     }
 
-    public async Task<bool> CheckForNewDataAsync(CancellationToken cancellationToken)
-    {
-        // Check if there is new data to process
-        var items = await GetPendingItemsAsync(cancellationToken);
-        return items.Count > 0;
-    }
-
-    public async Task ProcessAsync(CancellationToken cancellationToken)
+    public async Task<bool> ProcessAsync(CancellationToken cancellationToken)
     {
         using var activity = _tracer.StartActivity("ProcessBatch", ActivityKind.Internal);
+        activity.SetTag("app.service.name", nameof({ServiceName}));
 
         try
         {
-            var items = await GetPendingItemsAsync(cancellationToken);
-            var processed = 0;
+            // Replace with the real business operation.
+            await Task.Delay(1, cancellationToken);
 
-            foreach (var item in items)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                await ProcessItemAsync(item, cancellationToken);
-                processed++;
-            }
-
+            const int processed = 1;
             _itemsProcessed.Add(processed);
             activity.SetStatus(ActivityStatusCode.Ok);
-            _logger.LogInformation("Batch completed. Processed {Count} items.", processed);
+            _logger.LogInformation(BatchCompleted, "Batch completed. Processed {Count} items.", processed);
+            return processed > 0;
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            activity.SetStatus(ActivityStatusCode.Error, "Cancelled");
             throw;
         }
         catch (Exception ex)
         {
             activity.SetStatus(ActivityStatusCode.Error, ex.Message);
-            _logger.LogError(ex, "Batch failed");
+            _logger.LogError(BatchFailed, ex, "Batch failed");
             throw;
         }
     }
@@ -688,10 +776,22 @@ public class {ServiceName}Service : I{ServiceName}
 ### {ServiceName}Worker.cs
 
 ```csharp
-namespace {Organization}.{Product}.Services.{ServiceName};
+namespace {ServiceNamespace};
 
-using {Organization}.{Product}.Services.{ServiceName}.Configuration;
-using {Organization}.{Product}.Services.{ServiceName}.Contracts;
+using System;
+using System.Diagnostics.Metrics;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Ruya.Diagnostics.DistributedTracing;
+using Ruya.Extensions.Hosting;
+using Ruya.Primitives;
+using {ServiceNamespace}.Configuration;
+using {ServiceContractNamespace};
+using {ServiceNamespace}.Exceptions;
 
 public class {ServiceName}Worker : WorkerBackgroundService<{ServiceName}Settings>
 {
@@ -702,34 +802,49 @@ public class {ServiceName}Worker : WorkerBackgroundService<{ServiceName}Settings
         IDistributedTracing distributedTracing,
         IMeterFactory meterFactory,
         IOptions<{ServiceName}Settings> options,
-        IEnumerable<IHealthCheck> healthChecks,
+        HealthCheckService healthCheckService,
+        IHostApplicationLifetime hostApplicationLifetime,
         I{ServiceName} service)
-        : base(logger, distributedTracing, meterFactory, options, healthChecks)
+        : base(
+            logger,
+            distributedTracing,
+            meterFactory,
+            options,
+            healthCheckService,
+            hostApplicationLifetime)
     {
         _service = service;
     }
 
     public override async Task DoWorkAsync(CancellationToken cancellationToken)
     {
-        var hasData = await _service.CheckForNewDataAsync(cancellationToken);
-        IdleCycle = !hasData;
-        if (IdleCycle) return;
-
-        await _service.ProcessAsync(cancellationToken);
+        IdleCycle = !await _service.ProcessAsync(cancellationToken);
     }
+
+    protected override bool IsTransient(Exception exception) =>
+        exception is {ServiceName}TransientException or TimeoutException or TaskCanceledException;
 }
 ```
 
-## StartupExtensions.cs
+## Extensions/StartupExtensions.cs
 
 ```csharp
-namespace {Organization}.{Product}.Services.{ServiceName}.Extensions;
+namespace {ServiceNamespace}.Extensions;
 
-using {Organization}.{Product}.Services.{ServiceName}.Contracts;
+using System;
+using System.Diagnostics.Metrics;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Ruya.Diagnostics.DistributedTracing;
+using Ruya.Extensions.Configuration;
+using Ruya.Extensions.DependencyInjection;
+using Ruya.Primitives;
+using {ServiceNamespace}.Configuration;
+using {ServiceContractNamespace};
 
 public static class StartupExtensions
 {
-    public static IServiceCollection Add{ServiceName}(
+    public static IServiceCollection Add{ServiceName}Service(
         this IServiceCollection services,
         Action<{ServiceName}Settings>? setupAction = null)
     {
@@ -746,6 +861,21 @@ public static class StartupExtensions
                 settings.Enabled = config.GetFeatureFlag<{ServiceName}Settings>();
             })
             .ValidateDataAnnotations()
+            .Validate(
+                settings => settings.RetryMaxDelaySeconds >= settings.RetryBaseDelaySeconds,
+                "RetryMaxDelaySeconds must be greater than or equal to RetryBaseDelaySeconds.")
+            .Validate(
+                settings => settings.HealthHardTimeout is null || settings.HealthHardTimeout > TimeSpan.Zero,
+                "HealthHardTimeout must be positive when configured.")
+            .Validate(
+                settings => settings.ShutdownTimeout > TimeSpan.Zero,
+                "ShutdownTimeout must be positive.")
+            .Validate(
+                settings => settings.DelayBetweenExecutions >= TimeSpan.Zero,
+                "DelayBetweenExecutions cannot be negative.")
+            .Validate(
+                settings => settings.IdleBackoffDuration >= TimeSpan.Zero,
+                "IdleBackoffDuration cannot be negative.")
             .ValidateOnStart();
 
         if (setupAction is not null)
@@ -756,25 +886,59 @@ public static class StartupExtensions
         services.AddSingleton<I{ServiceName}, {ServiceName}Service>();
         services.AddSingleton<{ServiceName}Worker>();
         services.AddHostedService(sp => sp.GetRequiredService<{ServiceName}Worker>());
-        services.AddHealthChecks()
-            .AddCheck<{ServiceName}HealthCheck>("{ServiceName}", tags: ["ready"]);
+        services.AddHealthChecks();
 
         return services;
     }
 
-    public static WebApplication Map{ServiceName}(this WebApplication app)
-    {
-        ArgumentNullException.ThrowIfNull(app);
-
-        if (app.Configuration.GetFeatureFlag<{ServiceName}Settings>())
-            app.Map{ServiceName}Api();
-
-        return app;
-    }
 }
 ```
 
-> **Registration notes**: The worker must be exposed to the host via `AddHostedService` — the host only starts hosted services registered as `IHostedService` (the `IHostedLifecycleService` hooks are discovered through that same registration). The `AddSingleton<{ServiceName}Worker>()` + factory pair ensures the host and any other consumers share one worker instance. `I{ServiceName}` is registered as **singleton** because the singleton worker consumes it via constructor injection and the base class does not create DI scopes. If the service needs scoped dependencies (e.g., a `DbContext`), register it scoped instead and have the worker inject `IServiceScopeFactory` and resolve `I{ServiceName}` from a new scope inside each `DoWorkAsync` execution.
+When service-specific health monitoring is selected, append the readiness registration separately:
+
+```csharp
+services.AddHealthChecks()
+    .AddCheck<{ServiceName}HealthCheck>("{ServiceName}", tags: ["ready"]);
+```
+
+Register dependency checks that must pass before the worker starts with the `startup` tag. The base class
+executes only that tag through `HealthCheckService`; it deliberately excludes the worker's own readiness
+check, avoiding a `worker -> health check -> worker` construction cycle:
+
+`{DependencyName}` is the exact PascalCase name of the required startup dependency selected for this worker.
+The registration below is emitted only when that concrete `{DependencyName}HealthCheck` type already comes
+from the selected integration or the generator creates `{DependencyName}HealthCheck.cs` from the applicable
+dependency-specific pattern in [`health-check.md`](health-check.md). Never register an invented or missing
+type. For a dependency not covered by a complete pattern, require an integration-owned check or a
+user-confirmed side-effect-free readiness contract; otherwise stop before generating the worker startup gate.
+Substitute the confirmed dependency name consistently in the file, type, and registration name.
+
+```csharp
+services.AddHealthChecks()
+    .AddCheck<{DependencyName}HealthCheck>("{DependencyName}", tags: ["startup", "ready"]);
+```
+
+> **Registration notes**: The shown `AddSingleton<I{ServiceName}, {ServiceName}Service>()` and direct worker injection are the singleton-compatible branch. The worker must be exposed to the host via `AddHostedService` — the host only starts hosted services registered as `IHostedService` (the `IHostedLifecycleService` hooks are discovered through that same registration). The `AddSingleton<{ServiceName}Worker>()` + factory pair ensures the host and any other consumers share one worker instance. Apply the lifetime selected in Step 4 to `I{ServiceName}`. For a scoped service use `AddScoped`; for a transient service use `AddTransient`. In either of those branches, inject `IServiceScopeFactory` into the singleton worker and resolve `I{ServiceName}` from a new async scope inside each execution; never capture the service in the worker constructor:
+
+```csharp
+private readonly IServiceScopeFactory _scopeFactory;
+
+// Replace the I{ServiceName} constructor parameter with:
+IServiceScopeFactory scopeFactory
+
+// Constructor body:
+_scopeFactory = scopeFactory;
+
+public override async Task DoWorkAsync(CancellationToken cancellationToken)
+{
+    await using var scope = _scopeFactory.CreateAsyncScope();
+    var service = scope.ServiceProvider.GetRequiredService<I{ServiceName}>();
+    IdleCycle = !await service.ProcessAsync(cancellationToken);
+}
+```
+
+API mapping is independent of the worker. Apply the selected adapter's mapping contract from
+[`API Patterns`](api-patterns.md); the worker does not add or alter an API mapper.
 
 ## Configuration
 
@@ -786,10 +950,11 @@ public static class StartupExtensions
   "{ServiceName}": {
     "RunOnce": false,
     "RunImmediately": true,
-    "ScheduleCronExpression": "*/5 * * * *",
+    "ScheduleCronExpression": "0 */5 * * * *",
     "RetryEnabled": true,
     "RetryCount": 3,
     "RetryBaseDelaySeconds": 1,
+    "RetryMaxDelaySeconds": 30,
     "DelayBetweenExecutions": "00:00:00",
     "IdleBackoffDuration": "00:00:30",
     "HealthSampleSize": 5,
@@ -802,30 +967,33 @@ public static class StartupExtensions
 
 | Setting | Description |
 |---------|-------------|
-| `ScheduleCronExpression` | Cron expression, null/empty = continuous |
-| `RunOnce` | Execute once then stop |
-| `RunImmediately` | Execute on startup |
+| `ScheduleCronExpression` | Six-field Cronos expression including seconds; null/empty = continuous polling |
+| `RunOnce` | Execute once immediately, then stop |
+| `RunImmediately` | Execute once on startup before entering a scheduled loop; ignored when `RunOnce = true` |
 | `RetryEnabled` | Enable exponential backoff + jitter |
-| `RetryCount` | Max retry attempts (default 3) |
+| `RetryCount` | Retries after the initial attempt (default 3) |
 | `RetryBaseDelaySeconds` | Base delay for backoff (default 1) |
-| `DelayBetweenExecutions` | Fixed delay between executions, `00:00:00` = disabled |
-| `IdleBackoffDuration` | Delay when `IdleCycle = true`, `00:00:00` = disabled |
+| `RetryMaxDelaySeconds` | Maximum retry delay after exponential backoff and jitter (default 30) |
+| `DelayBetweenExecutions` | Fixed delay between non-idle continuous-polling executions; not composed with cron schedules, `00:00:00` = disabled |
+| `IdleBackoffDuration` | Replaces `DelayBetweenExecutions` after an idle continuous-polling cycle; `00:00:00` falls back to the normal continuous delay |
 | `HealthSampleSize` | Rolling sample size for average calculation |
 | `HealthDegradedThresholdMultiplier` | Last duration > avg x multiplier = degraded |
 | `HealthHardTimeout` | Max time since last success before unhealthy |
 | `ShutdownTimeout` | Graceful shutdown timeout, `TimeSpan` (default `00:00:30`) |
 
-## K8s Deployment Notes
+## Required Verification
 
-Ensure pod spec aligns with `ShutdownTimeout`:
+- Validate that a five-field cron expression is rejected and a six-field expression including seconds is accepted.
+- Prove a disabled worker neither runs tagged startup dependency checks nor starts its execution loop, and its service-specific health check reports healthy/disabled.
+- Cover immediate, delayed-first, continuous, and run-once execution modes; `RunOnce` executes exactly once whether `RunImmediately` is true or false.
+- Prove a delayed-first cron worker waits only for the cron occurrence (no pre-execution fixed delay), while continuous polling applies either the normal delay or the idle backoff, never both.
+- Cover retry count as retries after the initial attempt, retry only explicitly transient exceptions, and prove exponential delay never exceeds `RetryMaxDelaySeconds`.
+- Prove a non-transient failure and an exhausted transient failure are recorded, request application stop, and remain observable rather than being swallowed.
+- Reject negative/zero-invalid operational settings and a retry maximum below its base delay during options validation.
+- Prove startup executes only health registrations tagged `startup`, fails on degraded/unhealthy dependency checks, and never resolves the worker's own readiness check.
+- Stop a running worker through `StoppingAsync` and prove cancellation interrupts schedule, idle, and execution delays.
+- Await or dispose every started worker in test cleanup so faults and live loops cannot escape the test.
 
-```yaml
-spec:
-  terminationGracePeriodSeconds: 35  # Slightly more than ShutdownTimeout
-  containers:
-    - name: worker
-      lifecycle:
-        preStop:
-          exec:
-            command: ["sleep", "5"]  # Allow load balancer to drain
-```
+## Deployment Handoff
+
+This pattern owns the application's `ShutdownTimeout`; the [`infrastructure` graceful-shutdown standard](../../infrastructure/SKILL.md#graceful-shutdown) owns Kubernetes termination grace periods and lifecycle configuration. The deployment grace period must accommodate both the host and worker shutdown budgets. Do not copy Kubernetes manifests into this service pattern.

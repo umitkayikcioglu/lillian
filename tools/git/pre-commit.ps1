@@ -1,42 +1,70 @@
+Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-# Pre-commit orchestrator. When a commit changes the AI sources that feed the
-# plugin (.github/skills | prompts | agents | instructions), it points to each
-# generator under tools/ in turn, then stages what they (re)wrote. Each step is
-# a standalone script that also runs on its own (e.g. manually, or in CI).
+# Regenerate and stage platform output whenever an authored input changes.
 
-Write-Host "`n🔍 Running pre-commit checks..." -ForegroundColor Cyan
+$repoRoot = (& git rev-parse --show-toplevel).Trim()
+if ($LASTEXITCODE -ne 0) { throw "Unable to locate the repository root." }
 
-$staged  = @(git diff --cached --name-only --diff-filter=ACM)
-$sources = @(".github/skills/", ".github/prompts/", ".github/agents/", ".github/instructions/")
-$changed = @($staged | Where-Object { $file = $_; $sources | Where-Object { $file.StartsWith($_) } })
+function Invoke-Git {
+	param([string[]]$Arguments)
 
-if ($changed.Count -eq 0) {
-    Write-Host "No AI source files changed. Skipping sync." -ForegroundColor Gray
-    exit 0
+	$output = @(& git -C $repoRoot @Arguments)
+	if ($LASTEXITCODE -ne 0) {
+		throw "Git command failed: git $($Arguments -join ' ')"
+	}
+	return $output
 }
 
-Write-Host "Found $($changed.Count) AI source file(s) changed. Running sync + version bump..." -ForegroundColor Yellow
+$sourcePrefixes = @(".github/skills/", ".github/prompts/", ".github/agents/", ".github/instructions/")
 
-$repoRoot = git rev-parse --show-toplevel
+function Test-SyncInput {
+	param([string]$Path)
 
-# --- Steps that run (each is a standalone script under tools/) ---
-
-& "$repoRoot/tools/sync-ai-platforms.ps1"       # regenerate plugin bundle, .claude/rules, .agents/workflows
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "`n❌ Sync failed!" -ForegroundColor Red
-    exit 1
+	if ($Path -eq ".github/skills/INDEX.md") { return $false }
+	if ($Path -eq "tools/sync-ai-platforms.ps1") { return $true }
+	foreach ($prefix in $sourcePrefixes) {
+		if ($Path.StartsWith($prefix, [System.StringComparison]::Ordinal)) { return $true }
+	}
+	return $false
 }
 
-& "$repoRoot/tools/bump-plugin-version.ps1"     # patch-bump the plugin version across its manifests
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "`n❌ Version bump failed!" -ForegroundColor Red
-    exit 1
+$stagedPaths = @(Invoke-Git @("diff", "--cached", "--name-only", "--diff-filter=ACMRD", "--no-renames"))
+$changedInputs = @($stagedPaths | Where-Object { Test-SyncInput $_ })
+if ($changedInputs.Count -eq 0) {
+	Write-Host "No authored AI platform input changed. Skipping sync." -ForegroundColor Gray
+	exit 0
 }
 
-# --- Stage everything the steps (re)wrote ---
+# The generator reads the working tree. Do not generate from changes that are
+# absent from the commit being created.
+$unstagedPaths = @(Invoke-Git @("diff", "--name-only", "--diff-filter=ACMRD", "--no-renames"))
+$untrackedPaths = @(Invoke-Git @("ls-files", "--others", "--exclude-standard"))
+$dirtyInputs = @(
+	@($unstagedPaths + $untrackedPaths) |
+		Where-Object { Test-SyncInput $_ } |
+		Sort-Object -Unique
+)
+if ($dirtyInputs.Count -gt 0) {
+	Write-Host "Authored AI platform inputs must be staged completely:" -ForegroundColor Red
+	$dirtyInputs | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }
+	exit 1
+}
 
-git add "$repoRoot/.claude" "$repoRoot/.agents" "$repoRoot/plugins/ai-toolkit" "$repoRoot/.claude-plugin/marketplace.json" "$repoRoot/.github/skills/INDEX.md" "$repoRoot/README.md"
+& "$repoRoot/tools/sync-ai-platforms.ps1"
+if ($LASTEXITCODE -ne 0) { throw "AI platform sync failed." }
 
-Write-Host "`n✅ AI platforms synced, version bumped, and staged." -ForegroundColor Green
-exit 0
+& "$repoRoot/tools/bump-plugin-version.ps1"
+if ($LASTEXITCODE -ne 0) { throw "Plugin version bump failed." }
+
+$generatedPaths = @(
+	".claude",
+	".agents",
+	"plugins/ai-toolkit",
+	".claude-plugin/marketplace.json",
+	".github/skills/INDEX.md",
+	"README.md"
+)
+[void](Invoke-Git (@("add", "--") + $generatedPaths))
+
+Write-Host "AI platforms synced, version bumped, and generated output staged." -ForegroundColor Green

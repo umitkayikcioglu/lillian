@@ -3,9 +3,10 @@
 ## Metadata
 
 **PSU ID:** PSU-yyyyMMddHHmm-slug
+**Project ID:** `P{N}`
+**Project Name:** [Project Name]
 **Date of Report:** [YYYYMMDD]
 **Reporting Period:** [Start Date] to [End Date]
-**Project Name:** [Project Name]
 **Project Manager:** [Your Name / Project Manager's Name]
 
 ## Overall Status Summary

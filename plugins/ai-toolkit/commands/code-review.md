@@ -1,5 +1,5 @@
 ---
-description: Workflow review gate — review changes against CONTRIBUTING.md via the Reviewer agent
+description: Workflow review gate — review changes against every applicable authority via the Reviewer agent
 ---
 
 # Code Review

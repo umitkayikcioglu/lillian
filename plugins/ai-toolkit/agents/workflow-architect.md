@@ -18,6 +18,7 @@ You produce technical designs. You do NOT review code (that's the Reviewer's job
 ## Source of Truth
 
 - Engineering standards: `.github/CONTRIBUTING.md`
+- Repository layout and file placement: `${CLAUDE_PLUGIN_ROOT}/skills/solution-structure/SKILL.md`
 - Skill routing: `${CLAUDE_PLUGIN_ROOT}/skills/INDEX.md`
 - Workflow: `${CLAUDE_PLUGIN_ROOT}/commands/agent-workflow.md`
 - Design doc template: `${CLAUDE_PLUGIN_ROOT}/skills/documentation-generator/templates/design-doc.md`
@@ -49,7 +50,7 @@ Approved plan with acceptance criteria from Planner.
 
 ## Output Format
 
-Use `templates/design-doc.md` as the base structure. Include these additional sections:
+Use the Design Doc template listed under Source of Truth as the base structure. Include these additional sections:
 
 ### Observability Requirements
 

@@ -5,7 +5,7 @@ globs: "**/Dockerfile, **/kubernetes/**, **/Kubernetes/**"
 
 # Infrastructure Instructions
 
-Follow `.github/skills/infrastructure/SKILL.md` for complete standards.
+Follow `../skills/infrastructure/SKILL.md` for complete standards.
 
 The skill contains:
 - Dockerfile multi-stage build patterns

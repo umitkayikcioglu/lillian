@@ -1,12 +1,12 @@
-# Test Plan: [Release / Project / Initiative Name]
+# Test Plan: [Test Scope Name]
 
 ## Metadata
 
-**Test Plan ID:** TP-yyyyMMddHHmm-slug   *(release-scoped only — leave blank when filed under `/docs/projects/P[N]/TestPlan.md`)*
+**Test Plan ID:** TP-yyyyMMddHHmm-slug
 **Last Updated:** [YYYYMMDD]
 **Created:** [YYYYMMDD]
-**Scope:** App-wide | Module | Project P[N] | Release v[X.Y]
-**Project / Release:** [identifier — e.g., P3, v2.5, Q3-launch]
+**Scope:** [Repository/Product | Module | Component | Service | Project `P{N}` | Release v[X.Y]]
+**Scope Identifier:** [identifier — module/component/service name, P3, v2.5, Q3-launch, etc.]
 **Owner:** [Test Lead name]
 
 ## Status
@@ -40,7 +40,7 @@
 [What success looks like for this test effort. Tie to program-level acceptance criteria, quality goals, and any compliance requirements.]
 
 - [Objective: e.g., verify all P0 user journeys pass end-to-end]
-- [Objective: e.g., performance targets — p99 < 500ms under {load}]
+- [Objective: e.g., performance targets — p99 < 500ms under the specified load profile]
 - [Objective: e.g., zero Critical security findings]
 
 ---
@@ -177,7 +177,7 @@ Testing is complete when:
 - [RFCs informing this plan]
 - [ADRs of architectural relevance]
 - [Design Docs]
-- `.github/CONTRIBUTING.md` (Testing section)
+- [Test implementation instructions](relative-link-to-tests-instructions) <!-- link-check-ignore: resolve .github/instructions/tests.instructions.md from the generated document location -->
 - [External standards: IEEE 829, ISO/IEC/IEEE 29119, ISTQB syllabus, regulatory requirements]
 
 ---

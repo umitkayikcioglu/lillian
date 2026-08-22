@@ -2,6 +2,7 @@
 
 ## Metadata
 
+**Project ID:** `P{N}`
 **Project Name:** [Project Name]
 **Date:** [YYYYMMDD]
 **Author:** [Name]
@@ -11,7 +12,7 @@
 > **Scale this document to the project.**
 > - **Project Brief usage (light):** Fill *Executive Summary*, *Reasons*, *Business Options*, *Timescale*, and *Major Risks*. Skip the financial sections. Suitable for proposals where approval gates on capacity/strategy, not budget.
 > - **Full Business Case (heavy):** Fill all sections. Use when seeking funding, capital allocation, or formal investment approval.
-> - **With dedicated Financial Model:** When financial analysis is detailed enough to warrant its own document, leave *Costs*, *Expected Dis-benefits*, and *Investment Appraisal* high-level here and produce `BusinessCaseFinancialModel.md` alongside.
+> - **With dedicated Financial Model:** When financial analysis is detailed enough to warrant its own document, leave *Costs*, *Expected Dis-benefits*, and *Investment Appraisal* high-level here and produce a Business Case Financial Model alongside it. Resolve the physical filename from `solution-structure`.
 
 ## Executive Summary
 
@@ -57,5 +58,5 @@ You should be trying to quantify the value of a project as an investment.
 
 ## References
 
-- [Business Case Financial Model](business-case-financial-model.md)
+- [Business Case Financial Model](relative-link-to-business-case-financial-model) <!-- link-check-ignore: resolve from solution-structure -->
 - [Related ADRs / RFCs / Design Docs]

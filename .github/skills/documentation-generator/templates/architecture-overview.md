@@ -1,10 +1,11 @@
-# Architecture Overview: [System / Module / Component / Area Name]
+# Architecture Overview: [Covered Product, Module, Component, Service, or Coherent Area]
 
 ## Metadata
 
 **Last Updated:** [YYYYMMDD]
 **Owner:** [Name]
-**Scope:** App | Module | Component | Area *(Area = a coherent sub-system within a module/component, e.g., "auth flow", "pricing engine", "event pipeline")*
+**Physical Scope:** Repository/Product | Module | Component | Service
+**Covered Area (optional):** [A coherent subsystem within that physical scope, such as "auth flow", "pricing engine", or "event pipeline"; otherwise "Not applicable"]
 
 ## Purpose
 
@@ -63,7 +64,7 @@ sequenceDiagram
 
 - **Primary entities:** [Entity 1, Entity 2]
 - **Storage:** [database, schema reference]
-- **See:** [Data Dictionary](data-dictionary.md) for field-level definitions
+- **See:** [Data Dictionary](relative-link-to-data-dictionary) for field-level definitions <!-- link-check-ignore: resolve from solution-structure -->
 
 ## Cross-Cutting Concerns
 
@@ -87,8 +88,8 @@ sequenceDiagram
 
 [Index of key architectural choices that shaped this system. Each item links to its ADR for the *why* — this section catalogs, doesn't re-explain.]
 
-- [Decision area] — see [ADR-yyyyMMddHHmm-slug](path/to/adr.md)
-- [Decision area] — see [ADR-yyyyMMddHHmm-slug](path/to/adr.md)
+- [Decision area] — see [ADR-yyyyMMddHHmm-slug](relative-link-to-adr) <!-- link-check-ignore: resolve from solution-structure -->
+- [Decision area] — see [ADR-yyyyMMddHHmm-slug](relative-link-to-adr) <!-- link-check-ignore: resolve from solution-structure -->
 
 ## Operational Characteristics
 
@@ -106,9 +107,9 @@ sequenceDiagram
 
 ## References
 
-- [Tech Stack Overview](tech-stack-overview.md)
-- [Data Dictionary](data-dictionary.md)
-- [Business Glossary](business-glossary.md)
+- [Tech Stack Overview](relative-link-to-tech-stack-overview) <!-- link-check-ignore: resolve from solution-structure -->
+- [Data Dictionary](relative-link-to-data-dictionary) <!-- link-check-ignore: resolve from solution-structure -->
+- [Business Glossary](relative-link-to-business-glossary) <!-- link-check-ignore: resolve from solution-structure -->
 - [Related ADRs / RFCs / Design Docs]
 
 ## Revision History

@@ -2,6 +2,7 @@
 
 ## Metadata
 
+**Ticket ID:** `{TicketId}`
 **Project:** [Project Name]
 **Version:** 1.0
 **Date:** [YYYYMMDD]
@@ -60,42 +61,37 @@
 
 1. **Clone the repository:**
    ```pwsh
-   git clone [repository_url]
-   cd [project_folder]
+   git clone [Repository URL]
+   cd [Repository Directory]
    ```
 
 2. **Configure Local Secrets & Environment Variables:**
-   - Copy `development.env.template` to `development.env`
-   - Set secrets using .NET Secret Manager:
-     ```pwsh
-     cd src/WebApp
-     dotnet user-secrets set "ConnectionStrings:DefaultConnection" "[connection-string]"
-     ```
+   - Follow [relative link to the repository's local-development instructions].
+   - Run `[exact repository-specific configuration command]`.
 
 3. **Launch Dependencies:**
    ```pwsh
-   docker-compose up -d
+   [Exact dependency startup command]
    ```
 
 4. **Initialize Database & Seed Data:**
    ```pwsh
-   dotnet ef database update
-   dotnet run --project src/DbSeeder/DbSeeder.csproj
+   [Exact schema, migration, and seed command; or "Not applicable"]
    ```
 
 5. **Build & Run Application:**
    ```pwsh
-   dotnet run --project src/WebApp/WebApp.csproj
+   [Exact repository build and run command]
    ```
 
 ### 2.4 "Hello World": First Success
 
-- **Application URL:** https://localhost:5001
-- **Test Credentials:** `user: test@example.com`, `password: [password]`
+- **Application or endpoint URL:** [URL]
+- **Test Credentials:** [Secure retrieval instructions or "Not applicable"; never include a secret]
 - **How to Verify:** [Description of expected behavior]
 - **Running Tests:**
   ```pwsh
-  dotnet test
+  [Exact repository test command]
   ```
 
 ---

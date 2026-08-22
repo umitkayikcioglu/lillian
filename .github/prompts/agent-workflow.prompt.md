@@ -9,7 +9,7 @@ This file defines the **agent workflow** for this repository — the flow, routi
 
 **Note:** All agent transitions require human interaction. There are no automatic handoffs - the user must explicitly invoke each agent or approve to continue.
 
-> **CRITICAL INSTRUCTION:** When you adopt a role (e.g., Planner, Developer), you **MUST** first read the corresponding definition file in `.github/agents/workflow-<role>.agent.md` — it is the sole source of truth for that role's Entry, Responsibilities, Output Format, Behavioral Rules, and Exit. You are strictly bound by it.
+> **CRITICAL INSTRUCTION:** When you adopt a role (e.g., Planner, Developer), you **MUST** first read the corresponding definition file in `.github/agents/workflow-{RoleName}.agent.md` — substitute the lower-case role identifier for `{RoleName}`. That file is the sole source of truth for the role's Entry, Responsibilities, Output Format, Behavioral Rules, and Exit. You are strictly bound by it.
 
 ---
 
@@ -17,12 +17,14 @@ This file defines the **agent workflow** for this repository — the flow, routi
 
 | Document | Purpose |
 |----------|---------|
-| `.github/CONTRIBUTING.md` | Engineering standards (authoritative) |
+| `.github/CONTRIBUTING.md` | Broad, cross-cutting engineering and quality principles |
 | `.github/skills/INDEX.md` | Skill routing and library references |
 | `.github/agents/workflow-*.agent.md` | Role definitions and behaviors |
-| `.github/instructions/*.instructions.md` | Technology- and path-specific conventions |
+| `.github/instructions/*.instructions.md` | Technology- and artifact-specific implementation conventions |
 
-When working on a specific technology, also load the corresponding instruction file from `.github/instructions/`.
+When a technology or artifact scope applies, load every matching instruction from `.github/instructions/`;
+each matching instruction is authoritative for its implementation-specific conventions.
+
 Validation commands are selected from detected repository configuration per touched scope; do not assume one global build, test, lint, or package-manager command.
 
 ---
@@ -95,7 +97,7 @@ User Request
 |------|-----------|--------------|----------|------------------|
 | Planner | `workflow-planner` | Always | Plan with acceptance criteria | - |
 | Architect | `workflow-architect` | Always | Technical design, observability requirements | Approves Designer/DBA output |
-| Designer | `workflow-designer` | If UI involved | HTML/Tailwind mockups | Architect approves |
+| Designer | `workflow-designer` | If UI involved | HTML mockups | Architect approves |
 | DBA | `workflow-dba` | If DB changes | Schema design, migrations, index strategy | Architect approves |
 | Documenter (proposal) | `workflow-documenter` | If RFC needed (pre-impl) | RFC from Architect's design | - |
 | Documenter (design) | `workflow-documenter` | If Design Doc needed (post-RFC) | Design Doc — build-ready detail | - |
@@ -114,7 +116,7 @@ User Request
 A change is done only when:
 
 1. Acceptance criteria satisfied
-2. CONTRIBUTING.md fully complied with
+2. `.github/CONTRIBUTING.md` and every applicable specialized instruction fully complied with
 3. Applicable skills applied
 4. Test Cases drafted pre-implementation and every AC mapped (if Tester invoked)
 5. Reviewer returned PASS for implementation

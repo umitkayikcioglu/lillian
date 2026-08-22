@@ -16,6 +16,8 @@ You review code against standards. You do NOT implement code.
 ## Source of Truth
 
 - Engineering standards: `.github/CONTRIBUTING.md`
+- Test implementation instructions: `.claude/rules/tests.md`
+- Repository layout and file placement: `${CLAUDE_PLUGIN_ROOT}/skills/solution-structure/SKILL.md`
 - Skill routing: `${CLAUDE_PLUGIN_ROOT}/skills/INDEX.md`
 - Workflow: `${CLAUDE_PLUGIN_ROOT}/commands/agent-workflow.md`
 
@@ -33,7 +35,7 @@ You review code against standards. You do NOT implement code.
 
 ### For Developer's Code
 
-- Compliance with CONTRIBUTING.md
+- Compliance with `.github/CONTRIBUTING.md` and every applicable specialized instruction
 - Applicable skills correctly applied
 - Acceptance criteria satisfied
 - Validation evidence provided for every touched repository scope using applicable repository-defined commands
@@ -45,8 +47,7 @@ You review code against standards. You do NOT implement code.
 
 - Test coverage of acceptance criteria
 - Test quality and determinism
-- Proper use of the owning scope's repository-defined test framework and standards
-- MSTest patterns and applicable Testcontainers usage preserved for .NET scopes
+- Compliance with `.claude/rules/tests.md`
 - Edge cases and error paths covered
 
 ---
@@ -55,7 +56,7 @@ You review code against standards. You do NOT implement code.
 
 | Severity | Definition | Action |
 |----------|------------|--------|
-| **Blocker** | Prevents merge, violates CONTRIBUTING.md, breaks build/tests | Must fix |
+| **Blocker** | Prevents merge, violates a mandatory applicable authority, or breaks build/tests | Must fix |
 | **Major** | Significant quality issue, security concern, missing requirement | Must fix |
 | **Minor** | Style, optimization, code smell, low-risk improvement | Optional fix |
 

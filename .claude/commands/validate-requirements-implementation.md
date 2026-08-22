@@ -1,8 +1,8 @@
 ---
-description: Review code to ensure all business requirements and flow are correctly implemented
+description: Validate that code implements all business requirements and user flows
 ---
 
-# Business Requirements Code Review
+# Requirements Implementation Validator
 
 Perform a code review focused on verifying that business requirements and user flows are correctly implemented.
 

@@ -1,9 +1,9 @@
 # Contributing Guidelines
 
-This document defines the **canonical engineering, architecture, and quality standards**
-for all contributions to this repository.
-
-If there is any conflict between this file and other documentation, **this file wins**.
+This document defines the repository's **broad, cross-cutting engineering and quality principles**.
+It does not own technology-specific implementation conventions, repository structure, or artifact naming;
+applicable specialized guidance is authoritative for those details. All applicable authorities must be followed
+together.
 
 > _Always leave the code better than you found it!_
 
@@ -55,10 +55,6 @@ When making decisions or reviewing changes, priorities are ranked as follows:
 - Descriptive, intention-revealing names
 - Full words, no abbreviations
 - Comments only for non-obvious decisions
-- MSSQL:
-  - PascalCase
-  - Singular table names
-  - No prefixes, no abbreviations
 
 ---
 
@@ -77,17 +73,9 @@ When making decisions or reviewing changes, priorities are ranked as follows:
 
 ## UI Standards
 
-Apply UI standards by repository scope.
-
-### Blazor UI
-
-* **FluentUI Blazor** or **Tailwind CSS** exclusively — one framework per Blazor project, do not mix
-* No custom CSS, JavaScript, or fonts unless explicitly approved
-* Follow:
-
-  * [https://www.fluentui-blazor.net/](https://www.fluentui-blazor.net/)
-  * [https://fluent2.microsoft.design/](https://fluent2.microsoft.design/)
-  * [https://tailwindcss.com/docs](https://tailwindcss.com/docs)
+* Follow the repository's selected design system consistently.
+* Meet accessibility requirements.
+* Avoid unnecessary visual and interaction customization.
 
 ### Frontend UI
 
@@ -136,10 +124,8 @@ References:
 
 ## Concurrency and Async
 
-* Assume multithreaded execution
-* Use async I/O end-to-end
-* CancellationToken is required on all public async APIs
-* No blocking calls on async paths
+* Design concurrent execution and cooperative cancellation explicitly.
+* Keep asynchronous workflows nonblocking end-to-end.
 
 ---
 
@@ -148,7 +134,7 @@ References:
 * Define domain, transient, and fatal exception categories
 * Never swallow exceptions
 * No catch-all without rethrow
-* HTTP APIs must map errors to ProblemDetails
+* Map boundary errors consistently.
 
 ---
 
@@ -157,20 +143,18 @@ References:
 * Profile before optimizing
 * Remove synchronous I/O
 * Reduce allocations
-* Avoid LINQ in hot paths unless measured
 
 ---
 
 ## Nullability and Immutability
 
-* Nullable reference types enabled
-* Prefer immutable records for DTOs and value objects
+* Model absence explicitly.
+* Prefer immutable data at boundaries.
 
 ---
 
 ## Persistence
 
-* EF Core with explicit tracking strategy
 * Transactions around multi-aggregate changes
 * Indexes must match query shapes
 * Avoid hidden N+1 behavior
@@ -181,7 +165,6 @@ References:
 
 * Explicit cache keys, TTLs, and invalidation strategy
 * Protect against cache stampede
-* Use IDistributedCache for shared caches
 
 ---
 
@@ -212,9 +195,10 @@ References:
 
 ## Configuration
 
-* Do not pass `IConfiguration` into extension methods. Use `BindConfiguration` (bind to strongly-typed options) and pass options instead.
-* Options pattern
-* Environment-specific config via files or environment variables only
+* Validate configuration before use.
+* Capture process-composition decisions once and apply them consistently.
+* Keep configuration outside application code. Commit only non-secret defaults and supply deployment overrides
+  through environment variables or an approved secret provider.
 * Feature flags for risky changes
 
 
@@ -222,17 +206,16 @@ References:
 
 ## Dependency Management
 
-* **Third-party library approval required** – any new external dependency is subject to approval before being added
-* **Prefer workspace libraries** – use existing shared libraries in `common-libraries/` instead of writing custom implementations. The canonical library table (name, purpose, README) lives in `.github/skills/INDEX.md` — check it before adding any dependency
-* Minimize dependencies, especially in Domain layer
-* Vet licenses and maintenance status before adding dependencies
+* Add dependencies only when justified and approved.
+* Prefer an existing approved capability over a new dependency or custom replacement.
+* Verify compatibility, licensing, maintenance, and boundary impact.
 
 ---
 
 ## Observability
 
 * Structured logs
-* OpenTelemetry traces and metrics
+* Traces and metrics for critical operations
 * Correlate logs using trace IDs
 * Health, readiness, and liveness endpoints required
 
@@ -240,25 +223,23 @@ References:
 
 ## APIs
 
-* OpenAPI documented
-* Versioned routes
+* Public interfaces documented and versioned
 * Consistent paging, sorting, and error schema
-* Idempotency keys for POST where appropriate
+* Explicit retry-safety for state-changing operations where appropriate
 
 ---
 
 ## Time and Money
 
 * Use UTC for storage
-* Use `DateTimeOffset` in code
-* Use `decimal` for money
+* Preserve timezone offsets at application boundaries
+* Use exact arithmetic for money
 * Culture-invariant parsing
 
 ---
 
 ## Serialization
 
-* System.Text.Json with source generators
 * Stable field names
 * Backward-compatible DTO changes only
 
@@ -266,21 +247,9 @@ References:
 
 ## Testing
 
-Apply testing standards by repository scope.
-
-### .NET Testing
-
-* Test framework: **MSTest** only for Lillian .NET scopes.
-* Existing xUnit or NUnit usage in a .NET scope is a standards mismatch. Do not migrate test frameworks without explicit scope and approval.
-* Unit tests:
-  * Use fakes/mocks for dependencies.
-  * Focus on domain logic and edge cases.
-* Integration tests:
-  * For external dependencies (databases, queues, caches, brokers), use **Testcontainers**.
-  * For EF Core integration testing, use an **in-memory database**.
-* Contract tests for APIs
-* Property-based tests for parsers where applicable
-* Basic load smoke tests for critical paths
+* Add automated tests proportionate to the change's risk.
+* Cover acceptance criteria, edge cases, and failure paths.
+* Keep tests deterministic, isolated, and repeatable.
 
 ### Frontend Testing
 
@@ -293,8 +262,7 @@ Apply testing standards by repository scope.
 
 ## Code Quality
 
-* .editorconfig enforced
-* Analyzers enabled
+* Automated formatting and analyzers enforced
 * Treat warnings as errors
 * CI must pass:
 
@@ -339,7 +307,8 @@ Do not run repository-wide mutating formatters or auto-fix commands by default. 
 * Resource limits defined
 * Graceful shutdown implemented
 * Health probes configured
-* Configuration via appsettings.{environmentName}.json
+* Deployment-specific configuration is supplied through environment variables or an approved secret provider;
+  do not rewrite committed configuration files or bake secrets into images
 
 ---
 
@@ -349,7 +318,7 @@ Before pushing:
 
 1. Changes are intentional and scoped
 2. Formatting and analyzers are clean
-3. Verified locally (Docker Compose or Minikube if applicable)
+3. Verified locally in the applicable runtime environment
 4. Build and tests pass
 5. Documentation updated if behavior changed
 

@@ -28,7 +28,7 @@ Run the full pipeline end to end. Do not shortcut a phase. This is heavier than 
 
 ## Portability
 
-This skill is self-contained. It depends only on built-in capabilities — parallel subagents (or a sequential fallback if your platform has none), file writing, and web search/fetch — plus `assets/report-template.html` in this skill folder. No external scripts, APIs, paid services, or other skills are required. Drop the folder into any skills directory and it works.
+This skill is self-contained. It depends only on built-in capabilities — parallel subagents (or a sequential fallback if your platform has none), file writing, and web search/fetch — plus `assets/report-template.html` in this skill folder. No external scripts, APIs, paid services, or other skills are required. Drop the folder into any skills directory and it works. When the containing repository also supplies `solution-structure`, use that optional authority for in-repository placement; its absence never blocks this skill.
 
 Web access is the one hard requirement: if the platform cannot fetch the web, the skill must stop (see Phase 0) — it must never run from training memory.
 
@@ -55,7 +55,7 @@ Spawn **five research subagents in parallel** using your platform's subagent mec
 
 **5. THE HISTORIAN** — `You are THE HISTORIAN for: {TOPIC} ({TOPIC_FRAME}). You have seen disruption cycles before and look for patterns. Do real web research for genuine historical parallels (prior technologies, manias, market shifts). Answer: what parallels actually fit, and what we learn from how they played out (who won, who lost, what stabilized). Return EXACTLY: 1) CORE POSITION in 2 sentences. 2) STRONGEST EVIDENCE, 3-5 bullets each a specific historical case with dates/outcomes + a source URL. 3) THE ONE THING only a historian would say (the pattern no one else surfaces). Cite sources with URLs. Under 400 words.`
 
-When all five return, post a 2-3 line note in chat: which way they converge, and the sharpest disagreement. Keep raw briefs out of chat — if you ran the lenses yourself sequentially, write each brief to a scratch file (e.g. `storm-reports/.work/{lens}.md`) instead of streaming it into chat.
+When all five return, post a 2-3 line note in chat: which way they converge, and the sharpest disagreement. Keep raw briefs out of chat — if you ran the lenses yourself sequentially, write each brief to a platform temporary directory instead of streaming it into chat or creating an in-repository scratch convention.
 
 ## Phase 2: Map the contradictions
 
@@ -85,7 +85,7 @@ This map is not a separate deliverable. It is the raw material for the report: f
    - **References** — every citation, status tags `PENDING` until Phase 4.
    - **Contested sidebar & Corrected chips** — omit at Phase 3; Phase 4c adds the sidebar for claims flagged UNVERIFIED/contested/preprint and a Corrected chip wherever verification changed a figure.
    - **Dates** — set every `{{DATE}}` token from the system clock (`date +%Y-%m-%d` on POSIX, `Get-Date -Format yyyy-MM-dd` in PowerShell); never infer the date from memory. Use the same value everywhere.
-3. Write to `storm-reports/{topic-slug}-briefing.html` (relative to the current working directory; create the folder if needed). If the working directory is a git repository, add `storm-reports/` to `.git/info/exclude` after creating the folder, and never commit report output unless the user asks.
+3. When the repository contains [`solution-structure`](../solution-structure/SKILL.md#non-template-documentation-artifacts), resolve the complete timestamped Research briefing path there. Otherwise write `{yyyyMMddHHmm}-{topic-slug}.html` in the current working directory. In both cases, obtain `yyyyMMddHHmm` from the system clock rather than memory. Never commit report output unless the user asks. If the output is inside a Git working tree, add that exact generated report path to the repository-local `.git/info/exclude` before delivery so an uncommitted report is not staged accidentally; do not alter the shared `.gitignore`.
 
 ## Phase 4: Adversarial peer review + verification (do not skip)
 
@@ -112,7 +112,7 @@ This is what separates Storm Research from a normal report. Run it before delive
 
 ## Output
 
-1. Final deliverable: `storm-reports/{topic-slug}-briefing.html` — the post-verification version, with every `PENDING` replaced.
+1. Final deliverable: the canonical Research briefing path resolved in Phase 3 — the post-verification version, with every `PENDING` replaced.
 2. Best-effort open with the platform's default opener: macOS `open <path>`; Linux `xdg-open <path>` if available; Windows `Start-Process <path>` in PowerShell or `start "" <path>` in cmd. If the command fails or the environment is headless/remote, skip opening and just give the path — a failed open is not a pipeline failure.
 3. In chat, give: the file path, the verification tally (`N/N checked, X fabricated, Y corrected, Z demoted`), the honest overall grade from 4a, the one universal finding, the frontier question, and the claim safety summary (what is safe to assert vs avoid). Keep it tight.
 

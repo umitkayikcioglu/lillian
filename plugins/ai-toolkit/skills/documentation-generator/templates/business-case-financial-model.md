@@ -2,6 +2,7 @@
 
 ## Metadata
 
+**Project ID:** `P{N}`
 **Project Name:** [Project Name]
 **Date:** [YYYYMMDD]
 **Author:** [Name]
@@ -70,5 +71,5 @@
 
 ## References
 
-- [Business Case](business-case.md)
+- [Business Case](relative-link-to-business-case) <!-- link-check-ignore: resolve from solution-structure -->
 - [Related ADRs / RFCs / Design Docs]

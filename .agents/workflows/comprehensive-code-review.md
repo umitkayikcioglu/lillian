@@ -1,6 +1,5 @@
 ---
-mode: agent
-description: Standalone deep-dive audit across 8 quality dimensions, using the workflow Reviewer's severity scale
+description: "Standalone deep-dive audit across 8 quality dimensions, using the workflow Reviewer's severity scale"
 ---
 
 # Comprehensive Code Review
@@ -17,7 +16,7 @@ Identify the code to review (files, PR, or specified scope).
 
 ### 1. Code Quality
 - Readability and clarity
-- Naming conventions (per `.github/CONTRIBUTING.md`)
+- Naming conventions from the applicable owner; use `solution-structure` for physical project and file names
 - Code organization and structure
 - DRY principle adherence
 - SOLID principles adherence
@@ -68,6 +67,7 @@ Identify the code to review (files, PR, or specified scope).
 
 ### 8. Standards Compliance
 - `.github/CONTRIBUTING.md` adherence
+- Every matching `.github/instructions/*.instructions.md` applied correctly
 - Applicable skills from `.github/skills/INDEX.md` applied correctly
 
 ## Output Format

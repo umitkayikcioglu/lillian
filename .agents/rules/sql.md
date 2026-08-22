@@ -5,11 +5,16 @@ globs: **/*.sql
 
 # SQL Instructions
 
-Follow `.github/CONTRIBUTING.md` for SQL naming standards (MSSQL section).
+This file is the canonical authority for SQL implementation conventions.
 
-For table creation and migrations, use `.github/skills/mssql-table-scaffolder/SKILL.md`.
+## MSSQL naming
 
-The skill contains complete naming conventions, constraint patterns, index design, and migration workflows.
+- Use PascalCase identifiers.
+- Use singular table names.
+- Do not add prefixes or abbreviations.
+
+For table creation and migrations, use `.github/skills/mssql-table-scaffolder/SKILL.md`. Its table-, constraint-,
+and index-specific patterns extend the SQL baseline in this instruction; they do not replace it.
 
 ## SQL Script Rules (all .sql files)
 
@@ -18,7 +23,11 @@ The skill contains complete naming conventions, constraint patterns, index desig
 
 ## Embedded SQL Resources Pattern
 
-When SQL is used from C# code, it must be stored as embedded `.sql` resource files, not as inline strings. The canonical folder layout and loader (`Resources/SQL/*.sql` + `Constants.cs` + `ResourceLoader.cs`) is defined in `.github/skills/dotnet-service-generator/references/standard-service.md` — follow it exactly.
+When SQL is used from C# code, it must be stored as embedded resource files, not as inline strings.
+Embedded SQL placement and filenames come from
+[`Canonical embedded SQL structure`](../skills/solution-structure/SKILL.md#canonical-embedded-sql-structure).
+Follow [`Resources/SQL/`](../skills/dotnet-service-generator/references/standard-service.md#resourcessql) for
+project-file embedding and loader implementation.
 
 ### SQL Script Guidelines
 
@@ -57,7 +66,7 @@ Every embedded SQL script **must** include a debug mode that allows developers t
 --! Parameters:
 --!   @p0 (NVARCHAR) - Schema name
 --!   @p1 (NVARCHAR) - Table name
---!   @pN (BIT)      - Debug mode (1 = print SQL without executing)
+--!   @p2 (BIT)      - Debug mode (1 = print SQL without executing)
 
 SET NOCOUNT ON;
 
@@ -65,12 +74,12 @@ SET NOCOUNT ON;
 -- DEBUG: Uncomment this block to test the script in SSMS
 DECLARE @p0 NVARCHAR(128) = N'dbo';
 DECLARE @p1 NVARCHAR(128) = N'TestTable';
-DECLARE @pN BIT = 1;  -- Set to 1 to see the generated SQL without executing
+DECLARE @p2 BIT = 1;  -- Set to 1 to see the generated SQL without executing
 */
 
 DECLARE @SchemaName NVARCHAR(128) = @p0;
 DECLARE @TableName NVARCHAR(128) = @p1;
-DECLARE @Debug BIT = COALESCE(@pN, 0);
+DECLARE @Debug BIT = COALESCE(@p2, 0);
 
 -- ... validation logic ...
 
@@ -96,4 +105,4 @@ END
 
 ### Reference Implementation
 
-The `MyOrganization.EntityFrameworkCore.SqlServer` workspace library (BatchLock feature) contains canonical examples — see the library table in `.github/skills/INDEX.md`.
+[Ruya.EntityFrameworkCore.SqlServer's BatchLock implementation](https://github.com/cilerler/ruya/tree/main/src/Ruya.EntityFrameworkCore.SqlServer/BatchLock) contains the reference SQL examples for this pattern.

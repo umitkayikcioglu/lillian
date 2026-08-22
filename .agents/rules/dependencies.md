@@ -5,7 +5,10 @@ globs: **/*.csproj
 
 # Dependency Instructions
 
-Follow `.github/CONTRIBUTING.md` (Dependency Management section) before adding or changing any `PackageReference`:
+This file is the canonical authority for changing project dependencies.
 
-- Any new third-party dependency requires approval before being added.
-- Prefer workspace libraries over custom implementations — the canonical library table lives in `.github/skills/INDEX.md`.
+- Obtain approval before adding any third-party dependency.
+- Before adding custom code or a new dependency, inspect existing project/package references and the approved
+  shared-library catalog in `.github/skills/INDEX.md`; reuse a compatible approved capability when available.
+- Minimize dependencies, especially across domain boundaries.
+- Verify compatibility, license, and maintenance status before changing any `PackageReference`.

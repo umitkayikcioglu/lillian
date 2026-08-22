@@ -1,30 +1,18 @@
 # Grafana Dashboard Templates
 
-Grafana dashboard JSON templates for .NET services with environment separation.
+Grafana dashboard JSON starting points for .NET services. Canonical placement, variables, filtering, tags, and panel requirements live in the [`observability` generation rules](../SKILL.md#generation-rules).
 
 ---
 
-## Output Directories
+## Output Location
 
-Dashboards live at the level they monitor:
-
-```
-src/
-├── Observability/Grafana/                         # App-wide: platform overview
-│   └── dashboard.json
-├── Modules/{ModuleName}/Observability/Grafana/    # Module: domain health
-│   └── dashboard.json
-├── .../{ComponentName}/Observability/Grafana/     # Component: sub-domain aggregation
-│   └── dashboard.json
-├── .../{ServiceName}/Observability/Grafana/       # Service: individual metrics
-│   └── dashboard.json
-```
+Use the canonical dashboard paths linked from the [`observability` generation rules](../SKILL.md#generation-rules). This template does not repeat the solution tree.
 
 ---
 
-## Standard Template Variables
+## HTTP Service Variable Examples
 
-Every dashboard **must** include these three Grafana template variables. Place them in the `templating.list` array.
+The JSON below implements the canonical variables for an HTTP service by discovering `env` and `service_name` from an HTTP request series. Use a guaranteed series from the workload being dashboarded; subscriber-only services use the provider-selection process in the [message-consumer guidance](../SKILL.md#message-consumer-dashboard).
 
 ### datasource
 
@@ -44,19 +32,16 @@ Every dashboard **must** include these three Grafana template variables. Place t
 ```json
 {
   "name": "env",
-  "type": "custom",
-  "query": "Integration,Testing,Staging,Production",
-  "current": { "text": "Production", "value": "Production" },
-  "options": [
-    { "text": "Integration", "value": "Integration", "selected": false },
-    { "text": "Testing", "value": "Testing", "selected": false },
-    { "text": "Staging", "value": "Staging", "selected": false },
-    { "text": "Production", "value": "Production", "selected": true }
-  ],
+  "type": "query",
+  "datasource": { "type": "prometheus", "uid": "$datasource" },
+  "query": "label_values(http_server_request_duration_seconds_count, env)",
+  "current": {},
   "hide": 0,
   "label": "Environment",
   "includeAll": false,
-  "multi": false
+  "multi": false,
+  "refresh": 2,
+  "sort": 1
 }
 ```
 
@@ -80,9 +65,14 @@ Every dashboard **must** include these three Grafana template variables. Place t
 
 ---
 
-## PromQL Query Patterns
+## PromQL Query Examples
 
-All queries **must** include `env="$env"` and `service_name="$service"` selectors.
+These examples query service-emitted telemetry and therefore apply the canonical `env="$env"` and `service_name="$service"` filters. Broker/exporter queries follow the distinct mapping rule in the [`observability` skill](../SKILL.md#generation-rules).
+
+For worker queries, use the authoring-time `{WorkerSnakeName}` token defined by the
+[`observability` generation rules](../SKILL.md#generation-rules). The full worker dashboard copies that value
+into its hidden Grafana `worker` variable; `$worker` and `${worker}` are runtime Grafana references to that
+variable, not additional authoring tokens.
 
 ### Request Rate
 
@@ -163,71 +153,68 @@ process_runtime_dotnet_thread_pool_threads_count{env="$env", service_name="$serv
 ### Background Worker - Execution Rate
 
 ```promql
-sum(rate(app_${worker}_total{env="$env", service_name="$service"}[5m]))
+sum(rate(app_{WorkerSnakeName}_total{env="$env", service_name="$service"}[5m]))
 ```
 
 ### Background Worker - Success / Failure Rate
 
 ```promql
 # Success rate
-sum(rate(app_${worker}_success{env="$env", service_name="$service"}[5m]))
+sum(rate(app_{WorkerSnakeName}_success{env="$env", service_name="$service"}[5m]))
 
 # Failure rate
-sum(rate(app_${worker}_failed{env="$env", service_name="$service"}[5m]))
+sum(rate(app_{WorkerSnakeName}_failed{env="$env", service_name="$service"}[5m]))
 ```
 
 ### Background Worker - Failure Ratio (%)
 
 ```promql
-sum(rate(app_${worker}_failed{env="$env", service_name="$service"}[5m]))
+sum(rate(app_{WorkerSnakeName}_failed{env="$env", service_name="$service"}[5m]))
 /
-sum(rate(app_${worker}_total{env="$env", service_name="$service"}[5m]))
+sum(rate(app_{WorkerSnakeName}_total{env="$env", service_name="$service"}[5m]))
 * 100
 ```
 
 ### Background Worker - Active Executions
 
 ```promql
-sum(app_${worker}_active{env="$env", service_name="$service"})
-```
-
-### Background Worker - Skipped Executions
-
-```promql
-sum(rate(app_${worker}_skipped{env="$env", service_name="$service"}[5m]))
+sum(app_{WorkerSnakeName}_active{env="$env", service_name="$service"})
 ```
 
 ### Background Worker - Retry Rate
 
 ```promql
-sum(rate(app_${worker}_retries{env="$env", service_name="$service"}[5m]))
+sum(rate(app_{WorkerSnakeName}_retries{env="$env", service_name="$service"}[5m]))
 ```
 
 ### Background Worker - Duration Percentiles
 
 ```promql
 # p50
-histogram_quantile(0.50, sum by (le) (rate(app_${worker}_duration_seconds_bucket{env="$env", service_name="$service"}[5m])))
+histogram_quantile(0.50, sum by (le) (rate(app_{WorkerSnakeName}_duration_seconds_bucket{env="$env", service_name="$service"}[5m])))
 
 # p95
-histogram_quantile(0.95, sum by (le) (rate(app_${worker}_duration_seconds_bucket{env="$env", service_name="$service"}[5m])))
+histogram_quantile(0.95, sum by (le) (rate(app_{WorkerSnakeName}_duration_seconds_bucket{env="$env", service_name="$service"}[5m])))
 
 # p99
-histogram_quantile(0.99, sum by (le) (rate(app_${worker}_duration_seconds_bucket{env="$env", service_name="$service"}[5m])))
+histogram_quantile(0.99, sum by (le) (rate(app_{WorkerSnakeName}_duration_seconds_bucket{env="$env", service_name="$service"}[5m])))
 ```
 
-> **Note**: `${worker}` is the snake_case worker class name (e.g., `payment_processor_worker` for `PaymentProcessorWorker`). The base class generates metric names as `app_{snake_case_class_name}_{metric}` from the full class name, so the `_worker` suffix is included.
+> **Note**: Substitute `{WorkerSnakeName}` while authoring these standalone queries. In generated dashboard
+> panels, `${worker}` reads the hidden Grafana variable initialized from that same value. The base class emits
+> `app_{WorkerSnakeName}_{metric}`, so the `_worker` suffix is included.
 
 ---
 
 ## Service Health Dashboard
 
-Full template. Replace `$(SERVICE_NAME)` with the actual service name.
+Full template. Replace `$(DASHBOARD_SUBJECT_NAME)` with the complete canonical identity of the monitored scope
+and `$(DASHBOARD_UID)` with this dashboard's stable provider-safe identifier, following the parent skill.
 
 ```json
 {
-  "uid": "$(SERVICE_NAME)-health",
-  "title": "$(SERVICE_NAME) - Service Health",
+  "uid": "$(DASHBOARD_UID)",
+  "title": "$(DASHBOARD_SUBJECT_NAME) - Service Health",
   "tags": ["generated", "service-health"],
   "timezone": "browser",
   "editable": true,
@@ -247,19 +234,16 @@ Full template. Replace `$(SERVICE_NAME)` with the actual service name.
       },
       {
         "name": "env",
-        "type": "custom",
-        "query": "Integration,Testing,Staging,Production",
-        "current": { "text": "Production", "value": "Production" },
-        "options": [
-          { "text": "Integration", "value": "Integration", "selected": false },
-          { "text": "Testing", "value": "Testing", "selected": false },
-          { "text": "Staging", "value": "Staging", "selected": false },
-          { "text": "Production", "value": "Production", "selected": true }
-        ],
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "$datasource" },
+        "query": "label_values(http_server_request_duration_seconds_count, env)",
+        "current": {},
         "hide": 0,
         "label": "Environment",
         "includeAll": false,
-        "multi": false
+        "multi": false,
+        "refresh": 2,
+        "sort": 1
       },
       {
         "name": "service",
@@ -421,7 +405,8 @@ Full template. Replace `$(SERVICE_NAME)` with the actual service name.
 
 ## API Performance Dashboard
 
-Replace `$(SERVICE_NAME)` with the actual service name. Uses the same template variables as Service Health.
+Replace the dashboard identity placeholders as defined by the parent skill. Uses the same template variables
+as Service Health.
 
 ### Panel Definitions
 
@@ -437,8 +422,8 @@ Replace `$(SERVICE_NAME)` with the actual service name. Uses the same template v
 
 ```json
 {
-  "uid": "$(SERVICE_NAME)-api-perf",
-  "title": "$(SERVICE_NAME) - API Performance",
+  "uid": "$(DASHBOARD_UID)",
+  "title": "$(DASHBOARD_SUBJECT_NAME) - API Performance",
   "tags": ["generated", "api-performance"],
   "timezone": "browser",
   "editable": true,
@@ -536,7 +521,8 @@ Replace `$(SERVICE_NAME)` with the actual service name. Uses the same template v
 
 ## Resource Usage Dashboard
 
-Replace `$(SERVICE_NAME)` with the actual service name. Uses the same template variables as Service Health, plus an `instance` variable.
+Replace the dashboard identity placeholders as defined by the parent skill. Uses the same template variables
+as Service Health, plus an `instance` variable.
 
 ### Additional Template Variable
 
@@ -571,8 +557,8 @@ Replace `$(SERVICE_NAME)` with the actual service name. Uses the same template v
 
 ```json
 {
-  "uid": "$(SERVICE_NAME)-resources",
-  "title": "$(SERVICE_NAME) - Resource Usage",
+  "uid": "$(DASHBOARD_UID)",
+  "title": "$(DASHBOARD_SUBJECT_NAME) - Resource Usage",
   "tags": ["generated", "resource-usage"],
   "timezone": "browser",
   "editable": true,
@@ -705,7 +691,10 @@ Replace `$(SERVICE_NAME)` with the actual service name. Uses the same template v
 
 ## Background Worker Dashboard
 
-For services extending `WorkerBackgroundService<TSettings>`. Replace `$(SERVICE_NAME)` with the actual service name and `$(WORKER)` with the snake_case worker class name (e.g., `payment_processor_worker` for `PaymentProcessorWorker`).
+For services extending `WorkerBackgroundService<TSettings>`. Replace the dashboard identity placeholders as
+defined by the parent skill and resolve `{WorkerSnakeName}` using the
+[`observability` generation rules](../SKILL.md#generation-rules). The hidden Grafana variable named `worker` is
+initialized from that authoring token; `${worker}` in panel PromQL is the runtime Grafana variable reference.
 
 ### Additional Template Variable
 
@@ -713,8 +702,8 @@ For services extending `WorkerBackgroundService<TSettings>`. Replace `$(SERVICE_
 {
   "name": "worker",
   "type": "custom",
-  "query": "$(WORKER)",
-  "current": { "text": "$(WORKER)", "value": "$(WORKER)" },
+  "query": "{WorkerSnakeName}",
+  "current": { "text": "{WorkerSnakeName}", "value": "{WorkerSnakeName}" },
   "hide": 2,
   "label": "Worker"
 }
@@ -727,7 +716,6 @@ For services extending `WorkerBackgroundService<TSettings>`. Replace `$(SERVICE_
 | Execution Rate | timeseries | `sum(rate(app_${worker}_total{...}[5m]))` |
 | Success / Failure Ratio | timeseries (stacked) | `sum(rate(app_${worker}_success{...}[5m]))` + `_failed` |
 | Active Executions | stat | `sum(app_${worker}_active{...})` |
-| Skip Rate | timeseries | `sum(rate(app_${worker}_skipped{...}[5m]))` |
 | Retry Rate | timeseries | `sum(rate(app_${worker}_retries{...}[5m]))` |
 | Execution Duration | timeseries | `histogram_quantile(0.50/0.95/0.99, ... app_${worker}_duration_seconds_bucket ...)` |
 
@@ -735,8 +723,8 @@ For services extending `WorkerBackgroundService<TSettings>`. Replace `$(SERVICE_
 
 ```json
 {
-  "uid": "$(SERVICE_NAME)-worker",
-  "title": "$(SERVICE_NAME) - Background Worker",
+  "uid": "$(DASHBOARD_UID)",
+  "title": "$(DASHBOARD_SUBJECT_NAME) - Background Worker",
   "tags": ["generated", "background-worker"],
   "timezone": "browser",
   "editable": true,
@@ -756,25 +744,22 @@ For services extending `WorkerBackgroundService<TSettings>`. Replace `$(SERVICE_
       },
       {
         "name": "env",
-        "type": "custom",
-        "query": "Integration,Testing,Staging,Production",
-        "current": { "text": "Production", "value": "Production" },
-        "options": [
-          { "text": "Integration", "value": "Integration", "selected": false },
-          { "text": "Testing", "value": "Testing", "selected": false },
-          { "text": "Staging", "value": "Staging", "selected": false },
-          { "text": "Production", "value": "Production", "selected": true }
-        ],
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "$datasource" },
+        "query": "label_values(app_{WorkerSnakeName}_total, env)",
+        "current": {},
         "hide": 0,
         "label": "Environment",
         "includeAll": false,
-        "multi": false
+        "multi": false,
+        "refresh": 2,
+        "sort": 1
       },
       {
         "name": "service",
         "type": "query",
         "datasource": { "type": "prometheus", "uid": "$datasource" },
-        "query": "label_values(app_$(WORKER)_total{env=\"$env\"}, service_name)",
+        "query": "label_values(app_{WorkerSnakeName}_total{env=\"$env\"}, service_name)",
         "current": {},
         "hide": 0,
         "label": "Service",
@@ -786,8 +771,8 @@ For services extending `WorkerBackgroundService<TSettings>`. Replace `$(SERVICE_
       {
         "name": "worker",
         "type": "custom",
-        "query": "$(WORKER)",
-        "current": { "text": "$(WORKER)", "value": "$(WORKER)" },
+        "query": "{WorkerSnakeName}",
+        "current": { "text": "{WorkerSnakeName}", "value": "{WorkerSnakeName}" },
         "hide": 2,
         "label": "Worker"
       }
@@ -870,7 +855,7 @@ For services extending `WorkerBackgroundService<TSettings>`. Replace `$(SERVICE_
     {
       "title": "Active Executions",
       "type": "stat",
-      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 8 },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 },
       "datasource": { "type": "prometheus", "uid": "$datasource" },
       "targets": [
         {
@@ -893,35 +878,9 @@ For services extending `WorkerBackgroundService<TSettings>`. Replace `$(SERVICE_
       }
     },
     {
-      "title": "Skip Rate",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 9, "x": 6, "y": 8 },
-      "datasource": { "type": "prometheus", "uid": "$datasource" },
-      "targets": [
-        {
-          "expr": "sum(rate(app_${worker}_skipped{env=\"$env\", service_name=\"$service\"}[5m]))",
-          "legendFormat": "skipped/s",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ops",
-          "custom": { "fillOpacity": 10, "lineWidth": 2 },
-          "thresholds": {
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 0.08 },
-              { "color": "red", "value": 0.33 }
-            ]
-          }
-        }
-      }
-    },
-    {
       "title": "Retry Rate",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 9, "x": 15, "y": 8 },
+      "gridPos": { "h": 8, "w": 16, "x": 8, "y": 8 },
       "datasource": { "type": "prometheus", "uid": "$datasource" },
       "targets": [
         {
@@ -978,8 +937,12 @@ For services extending `WorkerBackgroundService<TSettings>`. Replace `$(SERVICE_
 }
 ```
 
+## Message Consumer Dashboard
+
+The required panels, telemetry ownership, filtering, and variable-discovery rules are defined once in [`SKILL.md`](../SKILL.md#message-consumer-dashboard). No provider-neutral JSON can supply valid PromQL before a queue implementation and broker exporter are selected, so do not invent generic metric names or copy a provider's names into this template. The HTTP-oriented Service Health variables are not a valid starting point for a subscriber-only service.
+
 ---
 
 ## Generation Rules
 
-Generation rules live in SKILL.md — this file carries only the dashboard JSON starting points.
+Generation rules live in [`SKILL.md`](../SKILL.md#generation-rules); this file carries only dashboard JSON starting points and query examples.

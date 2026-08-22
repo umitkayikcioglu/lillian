@@ -67,8 +67,23 @@ Ask the user (if not already provided):
 - **Filter/WHERE clause** — Which records to target (e.g., `WHERE Status = 'Inactive'`, `WHERE CreatedAt < '2024-01-01'`)
 - **Update columns** (for UPDATE mode) — What columns to change and to what values
 - **Estimated row count** — To confirm batching is appropriate (use this to set expectations on runtime)
-- **ID column name** — The primary key or identity column to batch on (default: `Id`)
-- **ID column type** — Usually `BIGINT` or `INT`
+- **ID column name** — The primary key or identity column to batch on; resolve it from the target schema when the user does not supply it
+- **ID column type** — This template supports only integral `INT` or `BIGINT` keys. For any other key type, design and review a type-safe keyset implementation instead of adapting this arithmetic/key-order template.
+
+#### Canonical Placeholder Vocabulary
+
+Use brace tokens only. They are scaffold-time placeholders: resolve each token before returning executable SQL. The tracking tables reuse `{KeyColumn}` rather than introducing a second key-column alias.
+
+| Token | Meaning |
+|---|---|
+| `{Schema}` | Target table schema |
+| `{TableName}` | Target table name |
+| `{KeyColumn}` | Target primary-key or identity column, reused as the tracking-table key |
+| `{KeyType}` | Integral SQL data type of `{KeyColumn}`; only `INT` or `BIGINT` is supported by these templates |
+| `{FilterPredicate}` | Required predicate body, without the `WHERE` keyword, qualified with the `mt` source alias; use `1 = 1` only when the user explicitly targets every source row |
+| `{yyyyMMddHHmm}` | 12-digit UTC scaffold-time value, such as `202603171430`, shared by the tracker and in-progress table names for the operation |
+| `{UpdateExpression}` | Complete comma-separated assignment list after `SET`, qualified with the `mt` alias |
+| `{IndexName}` | Actual nonclustered index name when optional disable/rebuild advice is emitted |
 
 ### Step 2: Generate Tracking Table Setup
 Always output the schema + table creation block first (uncommented, ready to run):
@@ -85,26 +100,26 @@ BEGIN
 END
 GO
 
-CREATE TABLE [BulkProcessTracking].[yyyyMMddHHmm_Tracker]
+CREATE TABLE [BulkProcessTracking].[{yyyyMMddHHmm}_Tracker]
 (
-    ID {IdType} PRIMARY KEY,
+    [{KeyColumn}] {KeyType} PRIMARY KEY,
     IsProcessed BIT NOT NULL DEFAULT 0
 );
 
 CREATE NONCLUSTERED INDEX IDX_IsProcessed
-ON [BulkProcessTracking].[yyyyMMddHHmm_Tracker](IsProcessed)
-INCLUDE (ID);
+ON [BulkProcessTracking].[{yyyyMMddHHmm}_Tracker](IsProcessed)
+INCLUDE ([{KeyColumn}]);
 GO
 ```
 
-Replace `yyyyMMddHHmm` with the current timestamp (e.g., `202603171430`). Replace `{IdType}` with the actual ID column type.
+Resolve `{yyyyMMddHHmm}` once for the operation and reuse it in every script. Resolve `{KeyType}` to the actual key-column type.
 
 For UPDATE/DELETE operations, also create the in-progress table:
 
 ```sql
-CREATE TABLE [BulkProcessTracking].[yyyyMMddHHmm_InProgress]
+CREATE TABLE [BulkProcessTracking].[{yyyyMMddHHmm}_InProgress]
 (
-    ID {IdType} PRIMARY KEY
+    [{KeyColumn}] {KeyType} PRIMARY KEY
 );
 GO
 ```
@@ -112,19 +127,17 @@ GO
 ### Step 3: Generate Batch Scripts
 Use the templates from `templates/batch-insert.sql` and `templates/batch-update.sql` as the foundation.
 
-#### Naming Replacements
-| Template Term | Replace With |
-|---------------|--------------|
-| `dbo.MyTable` | User's actual schema.table |
-| `yyyyMMddHHmm` | Current timestamp |
-| `Id` / `mt.Id` | User's actual ID column name |
-| `mt.ModifiedAt = SYSUTCDATETIME()` | User's actual update logic |
+#### Resolve Template Tokens
+
+Resolve the canonical tokens above throughout both templates. `{UpdateExpression}` is required only for UPDATE mode; DELETE mode replaces the UPDATE statement as described below. Do not leave brace tokens or invent alternate aliases in executable output.
+
+`{FilterPredicate}` is never optional. Apply the same resolved predicate to the source-key `MIN`, source-key `MAX`, eligible-row `COUNT_BIG`, and batched source selection. This keeps bounds, progress, and selected rows on one target set. The insert template advances with a strict `>` keyset cursor and never computes `MAX(key) + 1`, so `BIGINT` maximum values remain safe.
 
 #### Batch Size Guidance
 | Record Count | Recommended @BatchSize |
 |--------------|----------------------|
-| < 100K | 5,000 - 10,000 |
-| 100K - 1M | 2,500 - 5,000 |
+| < 100K | 2,500 - 4,500 |
+| 100K - 1M | 2,000 - 4,500 |
 | 1M - 10M | 1,000 - 4,500 |
 | > 10M | 500 - 2,500 |
 
@@ -136,9 +149,11 @@ Adapt the update template by replacing the UPDATE statement with DELETE:
 ```sql
 -- Delete rows using the selected batch of IDs
 DELETE mt
-FROM {Schema}.{Table} AS mt WITH (ROWLOCK)
-INNER JOIN [BulkProcessTracking].[yyyyMMddHHmm_InProgress] AS ttip ON ttip.ID = mt.{IdColumn};
+FROM [{Schema}].[{TableName}] AS mt WITH (ROWLOCK)
+INNER JOIN [BulkProcessTracking].[{yyyyMMddHHmm}_InProgress] AS ttip ON ttip.[{KeyColumn}] = mt.[{KeyColumn}];
 ```
+
+Keep the surrounding claim and transaction logic unchanged. The shared in-progress table is truncated inside the same transaction, immediately before tracker claims are written to it, so concurrent or resumed executors cannot interleave the reset with another batch's claim or target DML. A claimed tracker row is completed even when its target row is already absent (or no longer matches the operation's update assumptions), and the loop continues according to claimed tracker rows rather than affected target rows. Any target DML failure rolls back the in-progress reset, claim, and target change together, preserving retry/resume safety.
 
 ### Step 4: Generate Cleanup Script
 Always include a commented-out cleanup section at the end:
@@ -151,17 +166,17 @@ Always include a commented-out cleanup section at the end:
 
 -- Verify completion
 SELECT IsProcessed, COUNT(*) AS Cnt
-FROM [BulkProcessTracking].[yyyyMMddHHmm_Tracker]
+FROM [BulkProcessTracking].[{yyyyMMddHHmm}_Tracker]
 GROUP BY IsProcessed;
 
 -- Drop tracking tables
-DROP TABLE IF EXISTS [BulkProcessTracking].[yyyyMMddHHmm_InProgress];
-DROP TABLE IF EXISTS [BulkProcessTracking].[yyyyMMddHHmm_Tracker];
+DROP TABLE IF EXISTS [BulkProcessTracking].[{yyyyMMddHHmm}_InProgress];
+DROP TABLE IF EXISTS [BulkProcessTracking].[{yyyyMMddHHmm}_Tracker];
 */
 ```
 
 ## Key Design Decisions (Explain to User)
-- **Batch size < 5,000** — Prevents lock escalation from row locks to table locks
+- **Batch size ≤ 4,500** — Reduces lock-escalation risk; SQL Server can still escalate based on lock count, memory pressure, and concurrent workload
 - **ROWLOCK, UPDLOCK hints** — Ensures row-level locking to avoid blocking other operations
 - **TABLOCK on insert** — Faster bulk insert into the tracking table (it's exclusively ours)
 - **WAITFOR DELAY** — 100ms pause between batches reduces pressure on busy systems

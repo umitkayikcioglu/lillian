@@ -1,8 +1,9 @@
 ---
-description: Generate PlantUML sequence diagram
+mode: agent
+description: Generate a PlantUML sequence diagram
 ---
 
-# Sequence Diagram Generator
+# PlantUML Sequence Diagram Generator
 
 Load and follow `.github/skills/plantuml-sequence-diagram-generator/SKILL.md`.
 

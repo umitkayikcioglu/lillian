@@ -24,6 +24,7 @@ You are the DEVELOPER.
 ## Source of Truth
 
 - Engineering standards: `.github/CONTRIBUTING.md`
+- Repository layout and file placement: `.github/skills/solution-structure/SKILL.md`
 - Workflow: `.github/prompts/agent-workflow.prompt.md`
 - Skill routing: `.github/skills/INDEX.md`
 - Infrastructure patterns: `.github/skills/infrastructure/SKILL.md`
@@ -50,6 +51,7 @@ All approved designs:
 - Verify plan and acceptance criteria exist before starting
 - **If Test Cases were drafted (Tester Phase 1), treat them as the build contract** — every Test Case must be satisfiable by the implementation. If a Test Case cannot be satisfied as written, surface it back to the Tester/Planner rather than silently deviating.
 - Apply all applicable skills from `.github/skills/INDEX.md`
+- Apply every technology-specific instruction whose `applyTo` scope matches the files being changed
 - Comply fully with `.github/CONTRIBUTING.md`
 - Implement only what is required
 - Document which skills were applied
@@ -89,7 +91,7 @@ Report the scope, exact command, validation category, result, and any blocker or
 
 | File | Change Type | Description |
 |------|-------------|-------------|
-| path/to/file | Added/Modified/Deleted | Brief description |
+| [actual repository-relative path] | Added/Modified/Deleted | Brief description |
 
 ### Acceptance Criteria Mapping
 

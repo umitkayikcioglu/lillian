@@ -20,8 +20,9 @@ Source-of-truth lives under `.github/`, and these folders are generated from it 
 pre-commit hook. Direct edits are overwritten on the next hook run and desync from source.
 
 To change a skill, instruction, agent, prompt, or plugin behavior, edit the source under
-`.github/` — `.github/skills/<name>/`, `.github/instructions/`, `.github/agents/`,
-`.agents/workflows/` — and let the hook regenerate the rest.
+`.github/` — `.github/skills/{SkillName}/`, `.github/instructions/`, `.github/agents/`,
+`.agents/workflows/` — and let the hook regenerate the rest. `{SkillName}` is the registered lower-case skill
+identifier.
 
 ## A consuming repository
 

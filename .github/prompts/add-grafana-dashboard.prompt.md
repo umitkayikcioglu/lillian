@@ -5,6 +5,9 @@ description: Create Grafana dashboard for a service
 
 # Dashboard Generator
 
-Load and follow `.github/skills/observability/SKILL.md`.
+Load and follow `.github/skills/observability/SKILL.md` for dashboard content, query, filtering, and
+template guidance. Resolve the dashboard's output path and filename from
+`.github/skills/solution-structure/SKILL.md#canonical-grafana-dashboard-placement`.
 
-The skill is the source of truth for dashboard output locations, template variables, query filtering, and placeholder rules; its `templates/grafana-dashboard.md` contains the complete Grafana JSON starting points (Service Health, API Performance, Resource Usage, Background Worker). Customize panels based on the Architect's observability requirements.
+The observability skill identifies the complete Grafana JSON starting points and resolves their placement
+through solution-structure. Customize panels based on the Architect's observability requirements.

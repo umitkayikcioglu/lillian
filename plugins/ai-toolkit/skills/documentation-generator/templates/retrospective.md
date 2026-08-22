@@ -2,7 +2,7 @@
 
 ## Metadata
 
-**Project ID:** P[N]
+**Project ID:** `P{N}`
 **Project Name:** [Project Name]
 **Retrospective Date:** [YYYYMMDD]
 **Duration:** [Start Date] → [End Date]
@@ -95,6 +95,6 @@
 
 ## References
 
-- [Business Case](BusinessCase.md)
-- [Latest Status Update](StatusUpdates/)
+- [Business Case](relative-link-to-business-case) <!-- link-check-ignore: resolve from solution-structure -->
+- [Latest Status Update](relative-link-to-latest-status-update) <!-- link-check-ignore: resolve from solution-structure -->
 - [Related ADRs / RFCs / Design Docs]

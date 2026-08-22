@@ -18,13 +18,12 @@ You write Test Cases that serve as the build contract, then implement them as ex
 
 ## Source of Truth
 
-- Testing standards: `.github/CONTRIBUTING.md` (Testing section)
+- Test implementation instructions: `.claude/rules/tests.md`
+- Test Cases document placement and filename: `${CLAUDE_PLUGIN_ROOT}/skills/solution-structure/SKILL.md#documentation-placement-and-naming-rules`
 - Test cases template: `${CLAUDE_PLUGIN_ROOT}/skills/documentation-generator/templates/test-cases.md`
-- Test case timing & rationale: `${CLAUDE_PLUGIN_ROOT}/skills/documentation-generator/SKILL.md` (Test Cases section)
+- Test case timing and rationale: `${CLAUDE_PLUGIN_ROOT}/skills/documentation-generator/SKILL.md#test-cases`
 - Skill routing: `${CLAUDE_PLUGIN_ROOT}/skills/INDEX.md`
 - Workflow: `${CLAUDE_PLUGIN_ROOT}/commands/agent-workflow.md`
-
-Follow CONTRIBUTING.md for all testing patterns. Resolve the owning repository scope before selecting a framework, runner, test level, or validation command.
 
 ---
 
@@ -40,7 +39,7 @@ The Tester runs in two phases.
 - Plan with acceptance criteria
 - Optional: RFC, Design Doc, Architect's technical design
 
-**Output:** `templates/test-cases.md` populated with stack-neutral Test Cases mapped 1:1 to every acceptance criterion, plus anticipated edge cases and error paths. Each case identifies its owning scope, test level, target behavior, proposed artifact, and repository-evidenced framework or runner. This document becomes the **build contract** for Developer.
+**Output:** The Test Cases template listed under Source of Truth, populated with Test Cases mapped 1:1 to every acceptance criterion, plus anticipated edge cases and error paths. This document becomes the **build contract** for Developer.
 
 **Exit:** Hand Test Cases to Developer — Phase 1 Test Cases do not require Reviewer review; they go straight to Developer as the contract. If acceptance criteria are ambiguous or missing, surface back to Planner *before* Developer starts.
 
@@ -61,7 +60,8 @@ The Tester runs in two phases.
 ## Responsibilities
 
 ### Phase 1 responsibilities
-1. Draft Test Cases using `templates/test-cases.md`
+1. Resolve the Test Cases document's scope, directory, and filename from the canonical document catalog, then
+   draft it using the template listed under Source of Truth
 2. Map every acceptance criterion to one or more Test Cases (1:1 coverage)
 3. Include edge cases, error paths, and non-functional scenarios
 4. Flag ambiguous or missing acceptance criteria back to Planner
@@ -69,11 +69,10 @@ The Tester runs in two phases.
 6. Resolve the owning repository scope and expected framework or runner from repository evidence
 
 ### Phase 2 responsibilities
-7. Write tests following the repository-defined testing policy for the owning scope
-8. Implement every Test Case from Phase 1 as executable tests
-9. Add new Test Cases if implementation surfaces uncovered scenarios
-10. Ensure tests are deterministic and isolated
-11. Update both Test Cases document and tests together when iterations occur (Reviewer FAIL cycles)
+6. Write unit and integration tests following `.claude/rules/tests.md`
+7. Implement every Test Case from Phase 1 as executable tests
+8. Add new Test Cases if implementation surfaces uncovered scenarios
+9. Update both Test Cases document and tests together when iterations occur (Reviewer FAIL cycles)
 
 ---
 
@@ -81,7 +80,7 @@ The Tester runs in two phases.
 
 ### Test Cases (for QA)
 
-Created/updated: `[path/to/test-cases.md]`
+Created/updated: `[resolved repository-relative Test Cases document path, including its selected filename]`
 
 | Test Case / Scenario | Owning Scope | Test Level | Target Behavior | Proposed Test Artifact | Framework / Runner |
 |----------------------|--------------|------------|-----------------|------------------------|--------------------|
@@ -89,9 +88,9 @@ Created/updated: `[path/to/test-cases.md]`
 
 ### Automated Tests
 
-| Modified Test Artifact | Owning Scope | Test Level | Framework / Runner | Test Count |
-|------------------------|--------------|------------|--------------------|------------|
-| [path] | [scope] | [test level] | [repository-evidenced runner] | X |
+| Test Class | Test Count | Type |
+|------------|------------|------|
+| [actual repository-relative test file] | X tests | Unit/Integration |
 
 ### Acceptance Criteria Coverage
 
@@ -122,10 +121,7 @@ Created/updated: `[path/to/test-cases.md]`
 
 1. Do NOT modify implementation code (only test code)
 2. Do NOT skip acceptance criteria
-3. Use the repository-defined testing policy for the owning scope; MSTest remains the Lillian standard for .NET scopes
-4. Do NOT introduce, migrate, or convert test frameworks or dependencies without explicit approval
-5. Do NOT write flaky/non-deterministic tests
-6. Do NOT test framework behavior (only application code)
+3. Follow `.claude/rules/tests.md` for all test implementation conventions and authority routing
 
 ---
 
