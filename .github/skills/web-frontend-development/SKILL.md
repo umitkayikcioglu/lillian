@@ -28,6 +28,7 @@ triggers:
 references:
   - references/frontend-quality.md
   - references/frontend-security.md
+  - references/validation-output.md
   - references/package-management.md
   - references/workspace-routing.md
   - references/typescript.md
@@ -41,7 +42,7 @@ summary: TypeScript, React, Next.js, and Angular frontend development with manif
 
 # Web Frontend Development
 
-Use this skill for TypeScript-based frontend work in React, Next.js, and Angular repositories. It integrates with the existing Planner, Architect, Developer, Reviewer, Tester, and Documenter roles; it does not introduce a new workflow role.
+Use this skill for TypeScript-based browser/frontend work in React, Next.js, and Angular repositories. Node.js backend, CLI, service, and runtime package work belongs to `node-development`; Python work belongs to `python-development`. It integrates with the existing Planner, Architect, Developer, Reviewer, Tester, and Documenter roles; it does not introduce a new workflow role.
 
 ## Canonical Ownership
 
@@ -53,6 +54,7 @@ Use this skill for TypeScript-based frontend work in React, Next.js, and Angular
 - `references/workspace-routing.md` owns repository, workspace, package, and project ownership resolution.
 - `references/package-management.md` owns package managers, lockfiles, and dependency-install mutation policy.
 - `references/frontend-quality.md` owns validation categories, severity, suppression handling, reporting, and formatter mutation controls.
+- `references/validation-output.md` owns the cross-stack validation result fields, categories, statuses, and examples.
 - `references/frontend-security.md` owns frontend security, privacy, accessibility, and performance applicability checks.
 - `.github/CONTRIBUTING.md` owns cross-stack engineering policy and severity.
 
@@ -64,6 +66,7 @@ Maintain a de-duplicated set of loaded references for the task.
 
 1. For any activated frontend task, always load exactly once:
    - `references/frontend-quality.md`
+   - `references/validation-output.md`
    - `references/frontend-security.md` when the change is user-facing or crosses an auth, data, environment, or dependency boundary
    - `references/package-management.md`
    - `references/workspace-routing.md`

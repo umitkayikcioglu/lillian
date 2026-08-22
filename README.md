@@ -11,7 +11,7 @@ This repository provides a structured framework for AI-assisted software develop
 - **🤖 Specialized Agent Roles**: 8 workflow agents (Planner, Architect, Designer, DBA, Developer, Reviewer, Tester, Documenter) plus 5 council personas used by the pressure-test skill
 - **📋 Structured Workflow**: Clear transitions and responsibilities between agents
 - **🎯 Domain-Specific Skills**: Reusable skills for common engineering tasks
-- **📚 Technology-Specific Instructions**: Guidelines for Blazor, C#, SQL, Infrastructure, Testing, TypeScript, React, Next.js, Angular, and frontend quality
+- **📚 Technology-Specific Instructions**: Guidelines for Blazor, C#, SQL, Infrastructure, Testing, TypeScript, React, Next.js, Angular, Node.js, Python, and frontend quality
 - **🔄 Multi-AI Support**: Compatible with GitHub Copilot, Claude Code, OpenAI Codex, and Google Antigravity
 
 ### AI Assistant Compatibility Matrix
@@ -512,10 +512,12 @@ The repository includes production-ready skills for engineering, documentation, 
 - **infrastructure**: Docker and Kubernetes patterns for .NET 10 services including health probes, resource limits, and graceful shutdown.
 - **mssql-bulk-data-operations**: Generates production-ready batched T-SQL for large-scale UPDATE/DELETE on MSSQL, plus tracking-table staging, with progress tracking, checkpointing, and transaction safety.
 - **mssql-table-scaffolder**: Scaffolds production-ready MSSQL tables or generates migration scripts following enterprise conventions.
+- **node-development**: Node.js backend, CLI, service, and package-workspace development with manifest-first scope detection and repository-defined validation.
 - **observability**: Standard SLIs, dashboard templates, alert conventions, and OpenTelemetry patterns for .NET services.
 - **plantuml-sequence-diagram-generator**: Generate professional PlantUML sequence diagrams with consistent styling, colors, and standardized interaction patterns.
 - **pressure-test**: Adversarial 5-persona council that attacks an idea from every angle, then a Judge returns one GO / RESHAPE / KILL verdict with the cheapest 48-hour test to de-risk it. Optional anonymized peer-review round.
 - **project-instructions-bootstrap**: Safely bootstraps repo-owned CONTRIBUTING.md and copilot-instructions.md files from bounded stack and command evidence.
+- **python-development**: Python application, API, CLI, library, and packaging development with manifest-first project detection and repository-defined validation.
 - **session-handoff**: Structured end-of-session summary so a fresh agent can continue seamlessly after the context is cleared. Chat-only output.
 - **solution-structure**: Source of truth for the opinionated .NET solution folder structure (root scaffolding, /docs, /src/Modules/Component/Service hierarchy, /tools/Kubernetes, /tests) and the documentation placement rules that govern items inside it.
 - **storm-research**: Multi-perspective, citation-verified HTML research briefing — five expert lenses, contradiction map, synthesized report, adversarial peer review with primary-source verification.
@@ -525,6 +527,10 @@ The repository includes production-ready skills for engineering, documentation, 
 <!-- END GENERATED SKILLS LIST -->
 
 See [.github/skills/INDEX.md](.github/skills/INDEX.md) for detailed skill documentation.
+
+### Node.js and Python Validation
+
+The Node.js and Python skills resolve project ownership, runtime, package manager or environment, framework evidence, and validation commands from manifests, project configuration, scripts, CI, and lockfiles. They preserve the exact command and working directory for each scope. Missing capabilities are reported as `not configured`; conflicting or incomplete ownership and tool evidence is reported as `ambiguous` rather than guessed.
 
 ## Getting Started
 

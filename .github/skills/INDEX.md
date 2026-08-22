@@ -123,6 +123,29 @@ If multiple skills match a task, apply all applicable skills.
 
 ---
 
+## node-development
+- Path: `.github/skills/node-development/SKILL.md`
+- Applies to: Planner, Architect, Developer, Reviewer, Tester, Documenter
+- Mandatory when:
+  - Implementing or reviewing Node.js backend, CLI, service, or library code
+  - Resolving JavaScript or TypeScript runtime, package, workspace, or build validation
+  - Working with npm, pnpm, Yarn, Bun, Nx, or Turborepo Node scopes
+- Triggers:
+  - "Node.js"
+  - "Nodejs"
+  - "Node backend"
+  - "Node service"
+  - "Node CLI"
+  - "npm"
+  - "pnpm"
+  - "Yarn"
+  - "Bun"
+  - "Express"
+  - "Fastify"
+  - "NestJS"
+
+---
+
 ## observability
 - Path: `.github/skills/observability/SKILL.md`
 - Applies to: Architect, Developer
@@ -181,6 +204,27 @@ If multiple skills match a task, apply all applicable skills.
   - "create contributing instructions"
   - "update copilot instructions"
   - "generate repository instructions"
+
+---
+
+## python-development
+- Path: `.github/skills/python-development/SKILL.md`
+- Applies to: Planner, Architect, Developer, Reviewer, Tester, Documenter
+- Mandatory when:
+  - Implementing or reviewing Python application, API, CLI, worker, or library code
+  - Resolving Python environment, package, test, type-check, build, or deployment validation
+  - Working with pyproject.toml, requirements files, Poetry, uv, pip-tools, or Pipenv projects
+- Triggers:
+  - "Python"
+  - "Python API"
+  - "Python CLI"
+  - "Python package"
+  - "FastAPI"
+  - "Django"
+  - "Flask"
+  - "pytest"
+  - "Poetry"
+  - "uv"
 
 ---
 

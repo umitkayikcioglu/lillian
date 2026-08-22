@@ -1,5 +1,5 @@
 ---
-applyTo: "**/*Tests*/**,**/tests/**,**/__tests__/**,**/*.test.ts,**/*.test.tsx,**/*.spec.ts,**/*.spec.tsx,**/*.test.js,**/*.test.jsx,**/*.spec.js,**/*.spec.jsx,**/*.Tests.cs,**/*Tests.cs"
+applyTo: "**/*Tests*/**,**/tests/**,**/__tests__/**,**/*.test.ts,**/*.test.tsx,**/*.spec.ts,**/*.spec.tsx,**/*.test.js,**/*.test.jsx,**/*.spec.js,**/*.spec.jsx,**/test_*.py,**/*_test.py,**/tests/**/*.py,**/*.Tests.cs,**/*Tests.cs"
 ---
 
 # Test Instructions
@@ -23,3 +23,5 @@ For .NET scopes, follow `.github/CONTRIBUTING.md` (`.NET Testing`).
   - End-to-end: `MyOrganization.MyProduct.MyArea.E2E.Tests`
 
 For activated frontend scopes, use `.github/skills/web-frontend-development/SKILL.md`.
+For activated Node.js scopes, use `.github/skills/node-development/SKILL.md`.
+For activated Python scopes, use `.github/skills/python-development/SKILL.md`.
