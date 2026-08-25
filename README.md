@@ -511,7 +511,7 @@ The repository includes production-ready skills for engineering, documentation, 
 - **plantuml-sequence-diagram-generator**: Generate professional PlantUML sequence diagrams with consistent styling, colors, and standardized interaction patterns.
 - **pressure-test**: Adversarial 5-persona council that attacks an idea from every angle, then a Judge returns one GO / RESHAPE / KILL verdict with the cheapest 48-hour test to de-risk it. Optional anonymized peer-review round.
 - **session-handoff**: Structured end-of-session summary so a fresh agent can continue seamlessly after the context is cleared. Chat-only output.
-- **solution-structure**: Source of truth for the opinionated .NET solution folder structure, including documentation and test naming, deployable runners, modular or standalone services, optional shared persistence projects, dashboards, Kubernetes, and tests.
+- **solution-structure**: Source of truth for the opinionated .NET solution folder structure, including documentation and test naming, separate Web and MAUI clients, deployable server runners, modular or standalone services, optional shared persistence projects, dashboards, Kubernetes, and tests.
 - **storm-research**: Multi-perspective, citation-verified HTML research briefing — five expert lenses, contradiction map, synthesized report, adversarial peer review with primary-source verification.
 - **work-item-generator**: Interactive generator for work items (initiatives, epics, features, stories, bugs, spikes, enhancements, tasks) that gathers context through targeted questions and produces structured documents.
 - **workspace-productivity**: Initializes folders and documents, syncs tasks, triages stale items, and maintains a two-tier memory system for decoding workplace shorthand.

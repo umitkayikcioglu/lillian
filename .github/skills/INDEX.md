@@ -207,6 +207,7 @@ If multiple skills match a task, apply all applicable skills.
 - Applies to: Developer, Architect, Documenter, Tester, DBA, Reviewer
 - Mandatory when:
   - Deciding where a file/folder goes inside the .NET solution
+  - Placing Web or MAUI client projects and their shared UI
   - Placing a doc, dashboard, Kubernetes manifest, embedded SQL, or service scaffold
 - Triggers:
   - "folder structure"
@@ -215,6 +216,8 @@ If multiple skills match a task, apply all applicable skills.
   - "repo layout"
   - "where does this go"
   - "file placement"
+  - "client application structure"
+  - "MAUI and Blazor structure"
   - "opinionated folder"
 
 ---
