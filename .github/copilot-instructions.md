@@ -9,6 +9,21 @@ applyTo: "**"
 > project names, and filenames through `.github/skills/solution-structure/SKILL.md`.
 > If two applicable authorities conflict, stop and reconcile the source documents instead of silently choosing one.
 
+# Repository Orientation
+
+When beginning work in a repository:
+
+1. Read the repository's root README and the project documentation it links to that is relevant to the task,
+   including architecture and architectural decisions.
+2. Establish the repository's purpose, current implementation, selected capabilities, and any remaining template
+   scaffolding or examples. Do not treat examples as approved product requirements.
+3. Distinguish the repository being worked on from vendored tooling and shared guidance. Obtain project-specific
+   facts from the repository, not from the shared toolkit's own project documentation.
+4. Apply the existing instruction and skill routing to the task. Surface missing or conflicting context rather
+   than inventing decisions.
+
+Reuse this context during the session. Refresh the relevant parts when the task scope or underlying files change.
+
 # Authored Guidance DRY Gate
 
 Before editing any authored guidance under `.github/`:
