@@ -20,9 +20,12 @@ adjust the script path if needed and choose **one** command:
 ```
 
 Use `-RepositoryPath <path>` to override the target folder, or `-WhatIf` to preview.
-The script creates links, maintains ignore rules, and copies missing guidance without
-replacing customized files or committing changes. Its policy keeps AI links ignored in both modes; the four
-AI exclusion files are ignored only in Local mode. The original manual setup options below remain unchanged.
+The script creates links and maintains ignore rules without committing changes. It copies
+`.github/CONTRIBUTING.md` and `.github/copilot-instructions.md` from the selected `.ai` checkout on
+every run, overwriting existing files without backups. It reuses existing checkouts without pulling updates.
+Its policy keeps AI links ignored in both modes; the four AI exclusion files are ignored only in Local mode.
+The original manual setup options below remain unchanged; their advice about preserving customized guidance
+does not apply to this script.
 
 ## Overview
 

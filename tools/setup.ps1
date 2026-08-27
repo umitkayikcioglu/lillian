@@ -8,7 +8,8 @@ Installs Lillian into an existing repository as a local clone or a Git submodule
 Both modes keep AI-tool entry points and links out of the consuming repository's
 commits through .gitignore. Local also ignores .ai and AI exclusion files;
 Submodule records .ai and .gitmodules and leaves AI exclusion files eligible for
-commits. Missing repository-owned guidance files are copied, never replaced.
+commits. .github/CONTRIBUTING.md and .github/copilot-instructions.md are copied from
+the selected .ai checkout on every run, overwriting existing files without backups.
 Existing installations are reused without pulling updates. Conflicting paths,
 tracked AI files, and implicit conversions between modes are rejected.
 Existing .gitignore files must be valid UTF-8, with or without a BOM.
@@ -305,7 +306,7 @@ if ($missingPatterns.Count -gt 0) {
         $missingPatterns + @('# <<< lillian <<<', '', '')) -join $lineEnding
 }
 
-if (-not $PSCmdlet.ShouldProcess($repositoryRoot, "Set up Lillian ($Mode): prepare .ai, update AI ignore rules, create relative links, and copy missing repository guidance")) {
+if (-not $PSCmdlet.ShouldProcess($repositoryRoot, "Set up Lillian ($Mode): prepare .ai, update AI ignore rules, create relative links, and overwrite .github/CONTRIBUTING.md and .github/copilot-instructions.md from .ai")) {
     return
 }
 
@@ -371,12 +372,8 @@ foreach ($entry in $linkSources.GetEnumerator()) {
 }
 foreach ($path in $copiedPaths) {
     $destinationPath = Join-Path $repositoryRoot $path
-    if ($null -ne (Get-SetupItem $destinationPath)) {
-        Write-Host "Preserved existing $path."
-    } else {
-        [IO.File]::Copy((Join-Path $vendorPath $path), $destinationPath, $false)
-        Write-Host "Copied $path; review it for your repository."
-    }
+    [IO.File]::Copy((Join-Path $vendorPath $path), $destinationPath, $true)
+    Write-Host "Copied $path from .ai (overwriting any existing file)."
 }
 
 Write-Host "Lillian setup complete ($Mode). Review .gitignore and the repository-owned guidance files before committing."
