@@ -2,6 +2,28 @@
 
 A comprehensive AI agent workflow system with specialized roles, skills, and instructions for building complex software systems using AI-assisted development.
 
+## Automated Setup
+
+Run [tools/setup.ps1](tools/setup.ps1) from the application repository you want to configure.
+Use PowerShell 7.2 or later and Git; Windows also requires Developer Mode or an elevated session for symlinks.
+The current folder is the default repository path. These examples assume Lillian is a sibling checkout;
+adjust the script path if needed and choose **one** command:
+
+```pwsh
+# Local clone (default)
+../lillian/tools/setup.ps1
+```
+
+```pwsh
+# Git submodule
+../lillian/tools/setup.ps1 -IsSubModule
+```
+
+Use `-RepositoryPath <path>` to override the target folder, or `-WhatIf` to preview.
+The script creates links, maintains ignore rules, and copies missing guidance without
+replacing customized files or committing changes. Its policy keeps AI links ignored in both modes; the four
+AI exclusion files are ignored only in Local mode. The original manual setup options below remain unchanged.
+
 ## Overview
 
 This repository provides a structured framework for AI-assisted software development through specialized agent roles. It defines a workflow where different AI agents handle specific phases of development, from planning to implementation to documentation.
