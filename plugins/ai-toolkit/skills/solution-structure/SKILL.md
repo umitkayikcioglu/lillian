@@ -1,6 +1,6 @@
 ---
 name: solution-structure
-description: Source of truth for the opinionated .NET solution folder structure, including in-repo documentation and test naming, root scaffolding, deployable runners, modular or standalone services, optional shared persistence projects, dashboards, /tools/Kubernetes, and /tests. Use when deciding folder structure, directory layout, repo layout, or where a file belongs.
+description: Source of truth for the opinionated .NET solution folder structure, including in-repo documentation and test naming, root scaffolding, separate Web and MAUI client applications, deployable server runners, modular or standalone services, optional shared persistence projects, dashboards, /tools/Kubernetes, and /tests. Use when deciding folder structure, directory layout, repo layout, or where a file belongs.
 type: guidance
 applies_to:
   - Developer
@@ -12,6 +12,7 @@ applies_to:
 mandatory: conditional
 mandatory_when:
   - Deciding where a file/folder goes inside the .NET solution
+  - Placing Web or MAUI client projects and their shared UI
   - Placing a doc, dashboard, Kubernetes manifest, embedded SQL, or service scaffold
 triggers:
   - folder structure
@@ -20,9 +21,11 @@ triggers:
   - repo layout
   - where does this go
   - file placement
+  - client application structure
+  - MAUI and Blazor structure
   - opinionated folder
 references: []
-summary: Source of truth for the opinionated .NET solution folder structure, including documentation and test naming, deployable runners, modular or standalone services, optional shared persistence projects, dashboards, Kubernetes, and tests.
+summary: Source of truth for the opinionated .NET solution folder structure, including documentation and test naming, separate Web and MAUI clients, deployable server runners, modular or standalone services, optional shared persistence projects, dashboards, Kubernetes, and tests.
 ---
 
 # Solution Structure
@@ -169,8 +172,9 @@ Full examples:
 
 > **Deployable-runner boundary:** `{Organization}.{Product}.Host` is a composition/app-runner wrapper only,
 > and an orchestration AppHost owns orchestration declarations only. A Gateway is also a deployable runner, but
-> its process responsibility includes intrinsic edge adapters as defined below. No runner owns reusable
-> application contracts, domain/business logic, or data access.
+> its process responsibility includes intrinsic edge adapters as defined below. Product UI belongs only to the
+> separate client topology defined below. No runner owns reusable application contracts, domain/business logic,
+> or data access.
 
 The application Host's process-level HTTP utility behavior comes from
 [`Deployable-process HTTP endpoints`](../../instructions/csharp.instructions.md#deployable-process-http-endpoints).
@@ -187,14 +191,67 @@ organization/product identity. Do not abbreviate these project names.
 | Edge gateway | `/src/{Organization}.{Product}.Gateway/` | `{Organization}.{Product}.Gateway.csproj` | Edge/proxy process entry point, route/cluster composition, and process-intrinsic ingress or egress adapters. |
 | Orchestration AppHost | `/src/{Organization}.{Product}.AppHost/` | `{Organization}.{Product}.AppHost.csproj` | Local/distributed application orchestration declarations. |
 
-`{DeployableProcessName}` is the exact complete project stem selected from this table, such as
-`{Organization}.{Product}.Host`. Reuse it for the runner directory, project file, assembly, and process
-identity. Kubernetes deployment identities are resolved once in the
+`{DeployableProcessName}` is the exact complete project stem selected from this table or, when Web is selected,
+from the Web client row in the client topology below. Reuse it for the runner directory, project file, assembly,
+and process identity. Kubernetes deployment identities are resolved once in the
 [canonical Kubernetes directory structure](#canonical-kubernetes-directory-structure).
 
 `{GatewayEdgeAdapterName}` is the exact PascalCase capability name of a selected process-intrinsic Gateway
 adapter, such as `Webhook`. It names a contextual folder and its implementation prefix beneath the complete
 Gateway project root; it is not a second or shortened Gateway identity.
+
+### Canonical client application topology
+
+Product UI is always separate from `Host`, `Gateway`, and `AppHost`. The Web and MAUI client capabilities are
+selected independently, and either selection generates the exact shared Razor Class Library. There is no
+standalone `{Organization}.{Product}.Client` project and no `{Organization}.{Product}.Client.Common` synonym.
+Within this bounded client family, `Shared` means product UI deliberately reused by sibling client runners;
+`Common` remains reserved for an explicitly defined generic-support boundary such as `Tests.Common`.
+
+| Project role | Canonical project root | Canonical project file | Selection and responsibility |
+|---|---|---|---|
+| Shared client UI | `/src/{Organization}.{Product}.Client.Shared/` | `{Organization}.{Product}.Client.Shared.csproj` | Generated whenever Web or MAUI is selected. Owns reusable Razor components, pages, layouts, navigation, presentation state, cross-platform client abstractions and services, and shared UI assets. |
+| Web client runner | `/src/{Organization}.{Product}.Client.Web/` | `{Organization}.{Product}.Client.Web.csproj` | Generated only when Web is selected. Owns the Blazor Web entry point, web shell, render-mode composition, browser-specific adapters, configuration, and Web-only host assets. |
+| MAUI client runner | `/src/{Organization}.{Product}.Client.Maui/` | `{Organization}.{Product}.Client.Maui.csproj` | Generated only when MAUI is selected. Owns the MAUI entry point, app-local `BlazorWebView` host page and shell, platform adapters, manifests, permissions, native resources, and packaging metadata. |
+
+The selection closure is deterministic:
+
+| Web selected | MAUI selected | Generated client projects |
+|---|---|---|
+| No | No | None |
+| Yes | No | `Client.Shared`, `Client.Web` |
+| No | Yes | `Client.Shared`, `Client.Maui` |
+| Yes | Yes | `Client.Shared`, `Client.Web`, `Client.Maui` |
+
+The dependency direction is acyclic:
+
+```text
+{Organization}.{Product}.Client.Shared
+    ↑                                  ↑
+{Organization}.{Product}.Client.Web    {Organization}.{Product}.Client.Maui
+```
+
+`Client.Shared` may consume only cross-boundary contract projects explicitly designed for client use; it never
+references a server runner, persistence project, or platform-specific implementation. `Client.Web` and
+`Client.Maui` reference `Client.Shared` and supply only their own shell and platform adapters. Client runners
+communicate with the application through the Gateway's public HTTP boundary without referencing the Gateway
+project. `Host`, `Gateway`, modules, and services never reference a `Client.*` project. `AppHost` may reference
+`Client.Web` solely to declare local orchestration; it never references `Client.Shared` or `Client.Maui`, and
+that orchestration reference is not an application dependency.
+
+Shared Razor components and routes remain render-mode and platform neutral. `Client.Web` selects the Web render
+mode from its root shell; `Client.Maui` maps the shared root component into its `BlazorWebView` shell.
+
+Apply DRY by artifact responsibility, not by folder name. Reusable static assets exist once in
+`/src/{Organization}.{Product}.Client.Shared/wwwroot/` and are consumed as Razor Class Library assets. A client
+runner's `wwwroot` contains only its required host bootstrap or assets exclusive to that platform; never copy a
+shared asset into either runner. In particular, `BlazorWebView.HostPage` is app-relative, so the required MAUI
+host document remains `/src/{Organization}.{Product}.Client.Maui/wwwroot/index.html`; it is not a reusable RCL
+asset. Omit an optional `wwwroot` when its owner has no assets.
+
+`Client.Web` is a deployable process, so its complete project stem is a valid `{DeployableProcessName}` for
+Docker, orchestration, observability, and Kubernetes placement. `Client.Maui` is a packaged native client, not
+a server deployment identity; its platform packaging and distribution do not use the server deployment tree.
 
 ### Canonical shared-persistence project placement
 
@@ -445,6 +502,45 @@ global.json                                 // Pinned .NET SDK selection
     /Grafana
       - dashboard.json                                // Platform overview dashboard
 
+  /{Organization}.{Product}.Client.Shared             // Generated when Web or MAUI is selected
+    - {Organization}.{Product}.Client.Shared.csproj   // Shared Razor Class Library
+    - _Imports.razor
+    - Routes.razor                                    // Routes shared by selected client runners
+    /Abstractions                                     // Cross-platform ports required by shared UI
+    /Components                                       // Reusable product UI
+      /Layout
+        - MainLayout.razor
+        - NavMenu.razor
+    /Pages                                            // Reusable routed pages
+    /Services                                         // Cross-platform API clients and presentation services
+    /wwwroot                                          // Optional reusable RCL assets; the single shared copy
+
+  /{Organization}.{Product}.Client.Web                // Generated only when Web is selected
+    - {Organization}.{Product}.Client.Web.csproj
+    - Program.cs                                      // Blazor Web entry point and composition
+    - appsettings.json
+    - appsettings.Development.json
+    - Dockerfile
+    /Components
+      - App.razor                                     // Web-specific root shell
+    /Properties
+      - launchSettings.json
+    /Services                                         // Browser/server implementations of shared client ports
+    /wwwroot                                          // Optional Web-only host assets; omit when empty
+
+  /{Organization}.{Product}.Client.Maui               // Generated only when MAUI is selected
+    - {Organization}.{Product}.Client.Maui.csproj
+    - MauiProgram.cs                                  // MAUI entry point and native composition
+    - App.xaml
+    - App.xaml.cs
+    - MainPage.xaml                                   // Hosts the BlazorWebView root component
+    - MainPage.xaml.cs
+    /Platforms                                        // Android, iOS, Mac Catalyst, and Windows integration
+    /Resources                                        // Native icons, splash screens, images, fonts, and raw assets
+    /Services                                         // Native implementations of shared client ports
+    /wwwroot                                          // Required app-local BlazorWebView host root
+      - index.html                                    // Required MAUI HostPage; never copied from Shared
+
   /{Organization}.{Product}.Host
     - Program.cs                                      // Process entry point; invokes composition only
     - ProgramExtensions.cs                            // Host/app-runner composition
@@ -471,17 +567,6 @@ global.json                                 // Pinned .NET SDK selection
       - MeEndpoint.cs                                  // Authenticated current-user projection
     /Extensions
       - StartupExtensions.cs                           // Registers modules/services selected for this process
-    /Components                                       // Optional process-specific Blazor/UI shell; thin presentation only
-      - App.razor
-      - Routes.razor
-      - _Imports.razor
-      /Layout
-        - MainLayout.razor
-        - NavMenu.razor
-      /Pages                                           // Process shell/composition pages, not reusable feature behavior
-        - ...
-    /wwwroot                                           // Optional static assets owned by this deployable process
-      - ...
 
   /{Organization}.{Product}.Gateway
     - Program.cs                                       // Gateway process entry point
@@ -644,6 +729,7 @@ targets when that boundary actually exposes HTTP behavior:
 
 | HTTP scope | Complete `{TestTarget}` |
 |---|---|
+| Web client surface | `{Organization}.{Product}.Client.Web` |
 | Application host surface | `{Organization}.{Product}.Host` |
 | Gateway surface | `{Organization}.{Product}.Gateway` |
 | Module surface | `{Organization}.{Product}.Modules.{ModuleName}` |
@@ -659,6 +745,9 @@ Test projects use the same complete target identity and only the applicable test
 | Shared persistence models | `{Organization}.{Product}.Models` | `Unit` |
 | Shared runtime persistence | `{Organization}.{Product}.Data` | `Unit`, `Integration` |
 | Shared EF migrations | `{Organization}.{Product}.Migrations` | `Integration` |
+| Shared client UI | `{Organization}.{Product}.Client.Shared` | `Unit` |
+| Web client runner | `{Organization}.{Product}.Client.Web` | `Unit`, `Integration`, `E2E` |
+| MAUI client runner | `{Organization}.{Product}.Client.Maui` | `Unit`, `Integration`, `E2E` |
 | Module project | `{Organization}.{Product}.Modules.{ModuleName}` | `Unit`, `Integration` |
 | Component boundary | `{Organization}.{Product}.Modules.{ModuleName}.{ComponentName}` | `Unit`, `Integration` |
 | Modular service boundary | `{Organization}.{Product}.Modules.{ModuleName}.{ComponentName}.{ServiceName}` | `Unit`, `Integration` |
@@ -676,11 +765,12 @@ capability-specific files exist. That single delegation is not permission to inv
 redefine a shown structural filename, or omit a folder required by a selected capability.
 
 The Host is a composition/app-runner wrapper, and AppHost is an orchestration wrapper; neither is an
-application layer. A Gateway additionally owns edge adapters intrinsic to that process. Every runner owns its
-entry point, configuration and dependency composition, deployable-process assets, and role-specific process
-wiring. No runner owns reusable application contracts, domain or business logic, data access, or embedded
-business SQL. Those belong in sibling app-wide abstractions/domain projects, module projects, or sibling
-standalone service projects. Modules and services never reference a deployable runner.
+application layer. A Gateway additionally owns edge adapters intrinsic to that process. Client runners own
+only their web or native shell, composition, platform adapters, and deployment assets; reusable product UI
+belongs in `Client.Shared`. Every runner owns its entry point, configuration and dependency composition,
+deployable assets, and role-specific wiring. No runner owns reusable application contracts, domain or business
+logic, data access, or embedded business SQL. Those belong in sibling app-wide abstractions/domain projects,
+module projects, or sibling standalone service projects. Modules and services never reference a runner.
 
 The former Host-local `Contracts/`, `Exceptions/`, and `Internals/` buckets are deliberately retired rather
 than moved as app-wide catch-alls. Resolve each artifact by responsibility:
@@ -700,9 +790,9 @@ A deployable runner never owns `IDesignTimeDbContextFactory`, migration-only con
 classes. Applying migrations from a running application process is not part of the runner boundary; use the
 dedicated migrations project from an explicit development or deployment workflow.
 
-A runner may own process-specific UI shell/composition files and static assets. A Gateway may also own the
-process-intrinsic edge adapters described below. Reusable feature UI and all application/domain behavior remain
-with the owning sibling capability.
+Server runners never own product UI. `Client.Web` and `Client.Maui` own only their platform-specific UI shells;
+all UI shared by those runners belongs in `Client.Shared`. A Gateway may own the process-intrinsic edge adapters
+described below. Application and domain behavior remain with their owning sibling capability.
 
 ### Canonical Gateway edge-adapter ownership
 

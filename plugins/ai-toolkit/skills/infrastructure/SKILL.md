@@ -27,8 +27,10 @@ summary: Docker and Kubernetes patterns for .NET 10 services including health pr
 Defines containerization and orchestration standards for .NET services.
 
 Dockerfile and deployable-project placement comes from
-[`Canonical deployable-runner identities`](../solution-structure/SKILL.md#canonical-deployable-runner-identities),
-and Kubernetes placement comes from
+[`Canonical deployable-runner identities`](../solution-structure/SKILL.md#canonical-deployable-runner-identities)
+and, when a Web client is selected,
+[`Canonical client application topology`](../solution-structure/SKILL.md#canonical-client-application-topology).
+Kubernetes placement comes from
 [`Canonical Kubernetes directory structure`](../solution-structure/SKILL.md#canonical-kubernetes-directory-structure).
 This skill owns the contents of Dockerfiles and Kubernetes manifests, not a second repository layout.
 
@@ -43,9 +45,8 @@ This skill owns the contents of Dockerfiles and Kubernetes manifests, not a seco
 
 See [templates/dockerfile.md](templates/dockerfile.md) for complete template.
 
-The Dockerfile's `{DeployableProcessName}` is the full canonical deployable runner project name resolved from
-`solution-structure` (for example, the value matching its `{Organization}.{Product}.Host` form). Do not shorten
-it to a service name or invent app/core/infrastructure project identities.
+The Dockerfile's `{DeployableProcessName}` is the full canonical deployable project name resolved from those
+structural sections. Do not shorten it to a service name or invent app/core/infrastructure project identities.
 
 ### Required Structure
 

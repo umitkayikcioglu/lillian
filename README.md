@@ -2,6 +2,31 @@
 
 A comprehensive AI agent workflow system with specialized roles, skills, and instructions for building complex software systems using AI-assisted development.
 
+## Automated Setup
+
+Run [tools/setup.ps1](tools/setup.ps1) from the application repository you want to configure.
+Use PowerShell 7.2 or later and Git; Windows also requires Developer Mode or an elevated session for symlinks.
+The current folder is the default repository path. These examples assume Lillian is a sibling checkout;
+adjust the script path if needed and choose **one** command:
+
+```pwsh
+# Local clone (default)
+../lillian/tools/setup.ps1
+```
+
+```pwsh
+# Git submodule
+../lillian/tools/setup.ps1 -IsSubModule
+```
+
+Use `-RepositoryPath <path>` to override the target folder, or `-WhatIf` to preview.
+The script creates links and maintains ignore rules without committing changes. It copies
+`.github/CONTRIBUTING.md` and `.github/copilot-instructions.md` from the selected `.ai` checkout on
+every run, overwriting existing files without backups. It reuses existing checkouts without pulling updates.
+Its policy keeps AI links ignored in both modes; the four AI exclusion files are ignored only in Local mode.
+The original manual setup options below remain unchanged; their advice about preserving customized guidance
+does not apply to this script.
+
 ## Overview
 
 This repository provides a structured framework for AI-assisted software development through specialized agent roles. It defines a workflow where different AI agents handle specific phases of development, from planning to implementation to documentation.
@@ -520,7 +545,7 @@ The repository includes production-ready skills for engineering, documentation, 
 - **project-instructions-bootstrap**: Safely bootstraps repo-owned CONTRIBUTING.md and copilot-instructions.md files from bounded stack and command evidence.
 - **python-development**: Python application, API, CLI, library, and packaging development with manifest-first project detection and repository-defined validation.
 - **session-handoff**: Structured end-of-session summary so a fresh agent can continue seamlessly after the context is cleared. Chat-only output.
-- **solution-structure**: Source of truth for the opinionated .NET solution folder structure, including documentation and test naming, deployable runners, modular or standalone services, optional shared persistence projects, dashboards, Kubernetes, and tests.
+- **solution-structure**: Source of truth for the opinionated .NET solution folder structure, including documentation and test naming, separate Web and MAUI clients, deployable server runners, modular or standalone services, optional shared persistence projects, dashboards, Kubernetes, and tests.
 - **storm-research**: Multi-perspective, citation-verified HTML research briefing — five expert lenses, contradiction map, synthesized report, adversarial peer review with primary-source verification.
 - **web-frontend-development**: TypeScript, React, Next.js, and Angular frontend development with manifest-first stack detection and scope-aware validation.
 - **work-item-generator**: Interactive generator for work items (initiatives, epics, features, stories, bugs, spikes, enhancements, tasks) that gathers context through targeted questions and produces structured documents.

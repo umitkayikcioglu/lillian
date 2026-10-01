@@ -327,10 +327,12 @@ For traces, an activity processor should also stamp each span with `deployment.e
 }
 ```
 
-`{DeployableProcessName}` is the deployment-owned workload/resource identity selected from the canonical
-runner table in `solution-structure`: the complete Host, Gateway, or AppHost project stem. It is never an
-internal modular service or a sibling standalone-service implementation project. Confirm the actual runner
-from deployment configuration instead of deriving it from `{ServiceName}`.
+`{DeployableProcessName}` is the deployment-owned workload/resource identity resolved from
+[`Canonical deployable-runner identities`](../solution-structure/SKILL.md#canonical-deployable-runner-identities)
+or, when Web is selected,
+[`Canonical client application topology`](../solution-structure/SKILL.md#canonical-client-application-topology).
+It is never an internal modular service or a sibling standalone-service implementation project. Confirm the
+actual deployable project from deployment configuration instead of deriving it from `{ServiceName}`.
 
 The same complete `{DeployableProcessName}` is also the deployable project's canonical namespace. Do not add a
 second namespace token or substitute the namespace of an internal modular service hosted by another process.
