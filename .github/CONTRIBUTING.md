@@ -36,8 +36,7 @@ When making decisions or reviewing changes, priorities are ranked as follows:
 - **Transactional integrity**
   - Operations must be atomic, retry-safe, or compensating
 - **Resilience**
-  - Timeouts, retries with exponential backoff and jitter
-  - Circuit breakers for remote dependencies
+  - Verify scope and existing infrastructure against [Resilience](#resilience).
 - **Correctness**
   - Input validation at boundaries
   - Domain invariants enforced
@@ -179,8 +178,18 @@ References:
 ## Resilience
 
 * Timeouts per call
-* Retries with exponential backoff and jitter
-* Circuit breakers on remote dependencies
+* Preserve and reuse the repository's existing resilience infrastructure; do not introduce a new mechanism
+  merely to satisfy a general engineering checklist.
+* Add new retry policies, execution-strategy wrappers, circuit breakers, custom locking, or transaction
+  isolation changes only when the user explicitly requests them or explicitly approves a concrete technical
+  requirement. General standards and template examples are not authorization to add these mechanisms.
+* If existing framework configuration technically requires an execution-strategy wrapper for the requested
+  operation, explain the concrete requirement and use the smallest compatible solution without adding a new
+  retry policy. Otherwise, surface the need and obtain approval before introducing the mechanism.
+* Transactional integrity and retry behavior are separate decisions: an atomic transaction does not by itself
+  justify automatic retries, custom locking, or `Serializable` isolation.
+* When retries are approved, follow existing conventions with a bounded policy for transient, safe-to-replay
+  failures and exponential backoff with jitter; do not stack retry layers.
 
 ---
 

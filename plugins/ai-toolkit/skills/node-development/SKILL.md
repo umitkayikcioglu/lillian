@@ -77,7 +77,7 @@ If dependency installation would change a lockfile, stop and request approval be
 - Validate request and message inputs at service boundaries.
 - Keep server-only secrets and unrestricted environment values out of browser bundles and logs.
 - Handle rejected promises and async errors deliberately; do not swallow them.
-- Use timeouts, retry policies, and circuit breakers when calling remote dependencies, following the repository's existing conventions.
+- For remote dependencies, follow the scope and approval rules in [Resilience](../../CONTRIBUTING.md#resilience).
 - Preserve graceful shutdown and resource cleanup for servers, workers, streams, and child processes.
 - Use structured logs and existing tracing/metrics conventions for critical operations.
 - Do not add a dependency or test tool without approval under `.github/CONTRIBUTING.md`.
